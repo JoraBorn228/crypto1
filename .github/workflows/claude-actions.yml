@@ -7,6 +7,8 @@ on:
     types: [created]
   issues:
     types: [opened]
+  pull_request:
+    types: [opened]
 
 permissions:
   contents: write
@@ -15,11 +17,14 @@ permissions:
 
 jobs:
   claude:
-    if: contains(github.event.comment.body, '@claude') || contains(github.event.issue.body, '@claude')
+    if: |
+      contains(github.event.comment.body, '@claude') ||
+      contains(github.event.issue.body, '@claude') ||
+      contains(github.event.pull_request.body, '@claude')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
