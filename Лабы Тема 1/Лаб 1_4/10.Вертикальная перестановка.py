@@ -212,54 +212,70 @@ def rasshifrovat(cipher, word_key, numeric_key, sorted_letters, rows, cols):
 
 # ============ ГЛАВНАЯ ПРОГРАММА ============
 
-print("="*70)
-print("🔐 ШИФР ВЕРТИКАЛЬНОЙ ПЕРЕСТАНОВКИ (Вариант 10)")
-print("   Ключ - слово (буквы МОГУТ ПОВТОРЯТЬСЯ)")
-print("   ⚠️ Пустые клетки НЕ ЗАПОЛНЯЮТСЯ")
-print("="*70)
-print()
+def main():
 
-# Ручной ввод текста
-print("Введите текст для шифрования:")
-text = input(">>> ")
-if not text:
-    text = "Леопард не может изменить своих пятен"
-    print(f"Используем текст по умолчанию: '{text}'")
+    while True:
 
-print(f"\nИсходный текст: {text}")
-print()
+        print("\n" + "=" * 50)
+        print("ШИФР ВЕРТИКАЛЬНОЙ ПЕРЕСТАНОВКИ")
+        print("=" * 50)
+        print("1. Зашифровать")
+        print("2. Расшифровать")
+        print("3. Выход")
 
-# Ручной ввод ключа-слова
-while True:
-    print("Введите ключевое слово (например, МАГМА, КРИПТО, ПЕРЕСТАНОВКА)")
-    print("Буквы МОГУТ ПОВТОРЯТЬСЯ!")
-    word_key = input(">>> ").upper()
-    
-    if not word_key:
-        word_key = "МАГМА"
-        print(f"Используем ключ по умолчанию: '{word_key}'")
-    
-    if proverka_klucha(word_key):
-        break
-    print("Попробуйте ещё раз.\n")
+        choice = input("\nВыберите действие: ").strip()
 
-print("\n" + "="*70)
+        if choice == "1":
 
-# Шифруем
-cipher, numeric_key, sorted_letters, rows, cols = shifrovat(text, word_key)
+            text = input("Введите текст для шифрования: ")
 
-# Расшифровываем
-decrypted = rasshifrovat(cipher, word_key, numeric_key, sorted_letters, rows, cols)
+            while True:
+                key = input("Введите ключевое слово: ").upper()
 
-# Проверка
-print("\n" + "="*70)
-print("🔍 ПРОВЕРКА:")
-print("="*70)
-original_clean = text.replace(" ", "").upper()
-print(f"Исходный текст (без пробелов): {original_clean}")
-print(f"Расшифрованный текст:          {decrypted}")
-if original_clean == decrypted:
-    print("\n✅ УСПЕХ! Текст расшифрован правильно!")
-else:
-    print("\n❌ Ошибка при расшифровании")
-print("="*70)
+                if proverka_klucha(key):
+                    break
+
+            cipher, numeric_key, sorted_letters, rows, cols = shifrovat(text, key)
+
+            print("\nРезультат шифрования:")
+            print(cipher)
+
+        elif choice == "2":
+
+            cipher = input("Введите шифротекст: ")
+
+            while True:
+                key = input("Введите ключевое слово: ").upper()
+
+                if proverka_klucha(key):
+                    break
+
+            numeric_key, sorted_letters = poluchit_poryadok_stolbcov(key)
+
+            cols = len(key)
+            rows = (len(cipher) + cols - 1) // cols
+
+            decrypted = rasshifrovat(
+                cipher,
+                key,
+                numeric_key,
+                sorted_letters,
+                rows,
+                cols
+            )
+
+            print("\nРезультат расшифрования:")
+            print(decrypted)
+
+        elif choice == "3":
+
+            print("Выход из программы...")
+            break
+
+        else:
+
+            print("Неверный выбор!")
+
+
+if __name__ == "__main__":
+    main()

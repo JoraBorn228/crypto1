@@ -165,209 +165,95 @@ def print_matrix(matrix):
 
 
 def main():
-    print("="*60)
-    print("МАТРИЧНЫЙ ШИФР (Шифр Хилла)")
-    print("Вариант 8: Матрица-ключ не меньше 3×3")
-    print(f"Алфавит: {ALPHABET_SIZE} букв (А-Я, без Ё)")
-    print("="*60)
-    
+
     while True:
-        print("\nМЕНЮ:")
-        print("1. Зашифровать текст")
-        print("2. Расшифровать текст")
-        print("3. Работа с файлом")
-        print("0. Выход")
-        
-        choice = input("Выберите пункт: ").strip()
-        
-        if choice == '0':
-            print("Программа завершена.")
-            break
-        
-        elif choice == '1':
-            print("\n--- ШИФРОВАНИЕ ---")
-            
-            # Ввод текста
+
+        print("\n" + "=" * 50)
+        print("МАТРИЧНЫЙ ШИФР (Шифр Хилла)")
+        print("=" * 50)
+        print("1. Зашифровать")
+        print("2. Расшифровать")
+        print("3. Выход")
+
+        choice = input("\nВыберите действие: ").strip()
+
+        if choice == "1":
+
             text = input("Введите текст для шифрования: ").strip()
-            if not text:
-                print("Текст не введен!")
-                continue
-            
-            # Ввод матрицы
-            print("\nВведите матрицу-ключ (n×n, n ≥ 3)")
-            print("Формат: строки через запятую, числа через пробел")
-            print("Пример: 1 2 3, 4 5 6, 7 8 9")
-            
+
+            print("\nВведите матрицу-ключ")
+            print("Пример: 3 2 1, 1 1 1, 1 2 3")
+
             try:
+
                 matrix_str = input("Матрица: ").strip()
+
                 rows = matrix_str.split(',')
                 matrix = []
+
                 for row in rows:
-                    numbers = list(map(int, row.strip().split()))
-                    matrix.append(numbers)
-                
-                # Проверка размера
-                n = len(matrix)
-                if n < 3:
-                    print("Ошибка: Размер матрицы должен быть не менее 3×3")
-                    continue
-                
-                for row in matrix:
-                    if len(row) != n:
-                        print("Ошибка: Матрица должна быть квадратной")
-                        continue
-                
-                # Проверка валидности
+                    matrix.append(
+                        list(map(int, row.strip().split()))
+                    )
+
                 is_valid, message = validate_matrix(matrix)
+
                 if not is_valid:
                     print(f"Ошибка: {message}")
                     continue
-                
-                print(f"\n✓ {message}")
-                print_matrix(matrix)
-                
-                # Шифрование
+
                 cipher = MatrixCipher(matrix)
+
                 encrypted = cipher.encrypt(text)
-                
-                print(f"\nИсходный текст: {text}")
-                print(f"Зашифрованный:  {encrypted}")
-                
-                # Сохранение
-                save = input("\nСохранить результат? (y/n): ").strip().lower()
-                if save == 'y':
-                    filename = input("Имя файла: ").strip()
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        f.write(encrypted)
-                    print(f"Сохранено в {filename}")
-                
+
+                print("\nРезультат шифрования:")
+                print(encrypted)
+
             except Exception as e:
                 print(f"Ошибка: {e}")
-        
-        elif choice == '2':
-            print("\n--- РАСШИФРОВАНИЕ ---")
-            
-            # Ввод текста
+
+        elif choice == "2":
+
             text = input("Введите текст для расшифрования: ").strip()
-            if not text:
-                print("Текст не введен!")
-                continue
-            
-            # Ввод матрицы
-            print("\nВведите матрицу-ключ (ту же, что при шифровании)")
-            print("Формат: строки через запятую, числа через пробел")
-            
+
+            print("\nВведите ту же матрицу-ключ")
+
             try:
+
                 matrix_str = input("Матрица: ").strip()
+
                 rows = matrix_str.split(',')
                 matrix = []
+
                 for row in rows:
-                    numbers = list(map(int, row.strip().split()))
-                    matrix.append(numbers)
-                
-                # Проверка размера
-                n = len(matrix)
-                if n < 3:
-                    print("Ошибка: Размер матрицы должен быть не менее 3×3")
-                    continue
-                
-                for row in matrix:
-                    if len(row) != n:
-                        print("Ошибка: Матрица должна быть квадратной")
-                        continue
-                
-                # Проверка валидности
+                    matrix.append(
+                        list(map(int, row.strip().split()))
+                    )
+
                 is_valid, message = validate_matrix(matrix)
+
                 if not is_valid:
                     print(f"Ошибка: {message}")
                     continue
-                
-                print(f"\n✓ {message}")
-                print_matrix(matrix)
-                
-                # Расшифрование
+
                 cipher = MatrixCipher(matrix)
+
                 decrypted = cipher.decrypt(text)
-                
-                print(f"\nЗашифрованный текст: {text}")
-                print(f"Расшифрованный:      {decrypted}")
-                
-                # Сохранение
-                save = input("\nСохранить результат? (y/n): ").strip().lower()
-                if save == 'y':
-                    filename = input("Имя файла: ").strip()
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        f.write(decrypted)
-                    print(f"Сохранено в {filename}")
-                
+
+                print("\nРезультат расшифрования:")
+                print(decrypted)
+
             except Exception as e:
                 print(f"Ошибка: {e}")
-        
-        elif choice == '3':
-            print("\n--- РАБОТА С ФАЙЛОМ ---")
-            
-            filename = input("Введите имя файла: ").strip()
-            if not filename:
-                print("Имя файла не введено!")
-                continue
-            
-            try:
-                with open(filename, 'r', encoding='utf-8') as f:
-                    text = f.read()
-                print(f"Прочитано {len(text)} символов из файла")
-                print(f"Пример: {text[:100]}...")
-                
-                # Ввод матрицы
-                print("\nВведите матрицу-ключ:")
-                matrix_str = input("Матрица: ").strip()
-                rows = matrix_str.split(',')
-                matrix = []
-                for row in rows:
-                    numbers = list(map(int, row.strip().split()))
-                    matrix.append(numbers)
-                
-                # Проверка
-                n = len(matrix)
-                if n < 3:
-                    print("Ошибка: Размер матрицы должен быть не менее 3×3")
-                    continue
-                
-                is_valid, message = validate_matrix(matrix)
-                if not is_valid:
-                    print(f"Ошибка: {message}")
-                    continue
-                
-                print(f"\n✓ {message}")
-                
-                # Шифрование
-                cipher = MatrixCipher(matrix)
-                encrypted = cipher.encrypt(text)
-                
-                # Сохранение результатов
-                enc_filename = f"encrypted_{filename}"
-                with open(enc_filename, 'w', encoding='utf-8') as f:
-                    f.write(encrypted)
-                print(f"\nЗашифровано в файл: {enc_filename}")
-                
-                # Расшифрование для проверки
-                decrypted = cipher.decrypt(encrypted)
-                
-                # Сравнение
-                text_clean = text.upper().replace('Ё', 'Е')
-                decrypted_clean = decrypted.rstrip('Ъ')
-                
-                if text_clean == decrypted_clean:
-                    print("✓ Расшифровка успешна!")
-                else:
-                    print("✗ Ошибка расшифровки")
-                
-            except FileNotFoundError:
-                print(f"Файл {filename} не найден")
-            except Exception as e:
-                print(f"Ошибка: {e}")
-        
+
+        elif choice == "3":
+
+            print("Выход из программы...")
+            break
+
         else:
-            print("Неверный выбор. Попробуйте 0-3.")
+
+            print("Неверный выбор!")
 
 
 if __name__ == "__main__":

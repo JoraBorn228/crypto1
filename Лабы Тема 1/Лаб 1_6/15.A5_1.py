@@ -1,234 +1,219 @@
-"""
-ПОТОЧНЫЙ ШИФР A5/1
-Используется в GSM для шифрования голосовых данных.
-Состоит из трёх LFSR (регистров сдвига с линейной обратной связью).
-"""
+import random
 
-class LFSR:
-    def __init__(self, size, taps, clock_bit):
-        self.size = size
-        self.taps = taps
-        self.clock_bit = clock_bit
-        self.register = [0] * size
+R1_LEN = 19
+R2_LEN = 22
+R3_LEN = 23
 
-    def set_register(self, bits):
-        for i in range(min(len(bits), self.size)):
-            self.register[i] = bits[i]
+R1_FEEDBACK = [18, 17, 16, 13]
+R2_FEEDBACK = [21, 20]
+R3_FEEDBACK = [22, 21, 20, 7]
 
-    def clock(self):
-        feedback = 0
-        for tap in self.taps:
-            feedback ^= self.register[tap]
-        self.register = [feedback] + self.register[:-1]
-        return self.register[-1]
+R1_CLOCK = 8
+R2_CLOCK = 10
+R3_CLOCK = 10
 
-    def get_clock_bit(self):
-        return self.register[self.clock_bit]
+def majority(b1, b2, b3):
+    return (b1 & b2) | (b1 & b3) | (b2 & b3)
 
-    def get_output(self):
-        return self.register[-1]
+def clock_register(reg, length, feedback_bits):
+    out_bit = reg[length - 1]
+    feedback = 0
+    for idx in feedback_bits:
+        feedback ^= reg[idx]
+    for i in range(length - 1, 0, -1):
+        reg[i] = reg[i - 1]
+    reg[0] = feedback
+    return out_bit
 
+def string_to_64bit_key(text):
+    """Преобразует текст в 64 бита (первые 8 байт UTF-8, дополняя нулями)."""
+    data = text.encode('utf-8')[:8]
+    if len(data) < 8:
+        data += b'\x00' * (8 - len(data))
+    bits = []
+    for byte in data:
+        for i in range(7, -1, -1):
+            bits.append((byte >> i) & 1)
+    return bits
 
-class A5_1:
-    def __init__(self):
-        self.lfsr1 = LFSR(19, [18, 17, 16, 13], 8)
-        self.lfsr2 = LFSR(22, [21, 20], 10)
-        self.lfsr3 = LFSR(23, [22, 21, 20, 7], 10)
+def int_to_frame(num):
+    """
+    Преобразует целое число от 0 до 255 в список из 22 битов:
+    """
+    if not (0 <= num <= 255):
+        raise ValueError("Номер кадра должен быть в диапазоне 0 … 255")
+    # 8 бит числа
+    low_bits = []
+    for i in range(7, -1, -1):
+        low_bits.append((num >> i) & 1)
+    # 14 нулевых старших битов + 8 бит числа = 22 бита
+    frame_bits = [0] * 14 + low_bits
+    return frame_bits
 
-    def majority(self, x, y, z):
-        return (x & y) | (x & z) | (y & z)
+def a5_1_keystream(key_bits, frame_bits, keystream_length):
+    """Генерация гаммы A5/1."""
+    r1 = [0] * R1_LEN
+    r2 = [0] * R2_LEN
+    r3 = [0] * R3_LEN
 
-    def clock_all(self):
-        maj = self.majority(
-            self.lfsr1.get_clock_bit(),
-            self.lfsr2.get_clock_bit(),
-            self.lfsr3.get_clock_bit()
-        )
-        if self.lfsr1.get_clock_bit() == maj:
-            self.lfsr1.clock()
-        if self.lfsr2.get_clock_bit() == maj:
-            self.lfsr2.clock()
-        if self.lfsr3.get_clock_bit() == maj:
-            self.lfsr3.clock()
+    # Загрузка 64-битного ключа
+    for i in range(64):
+        bit = key_bits[i]
+        r1[0] ^= bit
+        r2[0] ^= bit
+        r3[0] ^= bit
+        clock_register(r1, R1_LEN, R1_FEEDBACK)
+        clock_register(r2, R2_LEN, R2_FEEDBACK)
+        clock_register(r3, R3_LEN, R3_FEEDBACK)
 
-    def get_output_bit(self):
-        return self.lfsr1.get_output() ^ self.lfsr2.get_output() ^ self.lfsr3.get_output()
+    # Загрузка 22-битного номера кадра
+    for i in range(22):
+        bit = frame_bits[i]
+        r1[0] ^= bit
+        r2[0] ^= bit
+        r3[0] ^= bit
+        clock_register(r1, R1_LEN, R1_FEEDBACK)
+        clock_register(r2, R2_LEN, R2_FEEDBACK)
+        clock_register(r3, R3_LEN, R3_FEEDBACK)
 
-    def initialize(self, key, frame_number):
-        key_bits = []
-        for byte in key:
-            for i in range(8):
-                key_bits.append((byte >> i) & 1)
+    # Холостые такты
+    for _ in range(100):
+        maj = majority(r1[R1_CLOCK], r2[R2_CLOCK], r3[R3_CLOCK])
+        if r1[R1_CLOCK] == maj:
+            clock_register(r1, R1_LEN, R1_FEEDBACK)
+        if r2[R2_CLOCK] == maj:
+            clock_register(r2, R2_LEN, R2_FEEDBACK)
+        if r3[R3_CLOCK] == maj:
+            clock_register(r3, R3_LEN, R3_FEEDBACK)
 
-        frame_bits = []
-        for i in range(22):
-            frame_bits.append((frame_number >> i) & 1)
-
-        for i in range(64):
-            if i < len(key_bits):
-                bit = key_bits[i]
-            else:
-                bit = 0
-            self.lfsr1.register = [(self.lfsr1.register[0] ^ bit)] + self.lfsr1.register[1:]
-            self.lfsr2.register = [(self.lfsr2.register[0] ^ bit)] + self.lfsr2.register[1:]
-            self.lfsr3.register = [(self.lfsr3.register[0] ^ bit)] + self.lfsr3.register[1:]
-            self.lfsr1.clock()
-            self.lfsr2.clock()
-            self.lfsr3.clock()
-
-        for i in range(22):
-            bit = frame_bits[i]
-            self.lfsr1.register = [(self.lfsr1.register[0] ^ bit)] + self.lfsr1.register[1:]
-            self.lfsr2.register = [(self.lfsr2.register[0] ^ bit)] + self.lfsr2.register[1:]
-            self.lfsr3.register = [(self.lfsr3.register[0] ^ bit)] + self.lfsr3.register[1:]
-            self.lfsr1.clock()
-            self.lfsr2.clock()
-            self.lfsr3.clock()
-
-        for _ in range(100):
-            self.clock_all()
-
-    def generate_keystream(self, length):
-        keystream = []
-        for _ in range(length):
-            self.clock_all()
-            keystream.append(self.get_output_bit())
-        return keystream
-
+    # Генерация гаммы
+    keystream = []
+    for _ in range(keystream_length):
+        maj = majority(r1[R1_CLOCK], r2[R2_CLOCK], r3[R3_CLOCK])
+        out_bit = r1[R1_LEN - 1] ^ r2[R2_LEN - 1] ^ r3[R3_LEN - 1]
+        keystream.append(out_bit)
+        if r1[R1_CLOCK] == maj:
+            clock_register(r1, R1_LEN, R1_FEEDBACK)
+        if r2[R2_CLOCK] == maj:
+            clock_register(r2, R2_LEN, R2_FEEDBACK)
+        if r3[R3_CLOCK] == maj:
+            clock_register(r3, R3_LEN, R3_FEEDBACK)
+    return keystream
 
 def text_to_bits(text):
     bits = []
-    encoded = text.encode('utf-8')
-    for byte in encoded:
-        for i in range(8):
-            bits.append((byte >> (7 - i)) & 1)
+    for byte in text.encode('utf-8'):
+        for i in range(7, -1, -1):
+            bits.append((byte >> i) & 1)
     return bits
 
-
 def bits_to_text(bits):
-    while len(bits) % 8 != 0:
-        bits.append(0)
     bytes_list = []
     for i in range(0, len(bits), 8):
-        byte = 0
-        for j in range(8):
-            byte = (byte << 1) | bits[i + j]
-        bytes_list.append(byte)
-    try:
-        return bytes(bytes_list).decode('utf-8', errors='replace')
-    except:
-        return bytes(bytes_list).decode('latin-1')
-
+        if i + 7 < len(bits):
+            byte = 0
+            for j in range(8):
+                byte |= (bits[i + j] << (7 - j))
+            bytes_list.append(byte)
+    return bytes(bytes_list).decode('utf-8', errors='ignore')
 
 def bits_to_hex(bits):
-    hex_str = ""
+    while len(bits) % 4 != 0:
+        bits.append(0)
+    hex_str = []
     for i in range(0, len(bits), 4):
-        nibble = 0
-        for j in range(4):
-            if i + j < len(bits):
-                nibble = (nibble << 1) | bits[i + j]
-            else:
-                nibble = nibble << 1
-        hex_str += format(nibble, 'X')
-    return hex_str
+        val = (bits[i] << 3) | (bits[i+1] << 2) | (bits[i+2] << 1) | bits[i+3]
+        hex_str.append(f"{val:X}")
+    return ''.join(hex_str)
 
+def hex_to_bits(hex_str):
+    bits = []
+    for ch in hex_str:
+        val = int(ch, 16)
+        bits.append((val >> 3) & 1)
+        bits.append((val >> 2) & 1)
+        bits.append((val >> 1) & 1)
+        bits.append(val & 1)
+    return bits
 
-def encrypt(text, key_hex, frame_number=0):
-    key = bytes.fromhex(key_hex.replace(" ", ""))
-    if len(key) < 8:
-        key = key + bytes(8 - len(key))
-    key = key[:8]
+def encrypt():
+    print("\nШИФРОВАНИЕ")
+    key_text = input("Введите ключ (текст): ")
+    try:
+        frame_num = int(input("Введите номер кадра (целое число от 0 до 255): "))
+    except ValueError:
+        print("Ошибка: необходимо ввести целое число")
+        return
 
-    cipher = A5_1()
-    cipher.initialize(key, frame_number)
+    plaintext = input("Введите текст для шифрования: ")
+    if not plaintext:
+        print("Текст не введён")
+        return
 
-    plaintext_bits = text_to_bits(text)
-    keystream = cipher.generate_keystream(len(plaintext_bits))
+    key_bits = string_to_64bit_key(key_text)
+    try:
+        frame_bits = int_to_frame(frame_num)
+    except ValueError as e:
+        print(e)
+        return
 
-    ciphertext_bits = []
-    for i in range(len(plaintext_bits)):
-        ciphertext_bits.append(plaintext_bits[i] ^ keystream[i])
+    plain_bits = text_to_bits(plaintext)
+    keystream = a5_1_keystream(key_bits, frame_bits, len(plain_bits))
+    cipher_bits = [plain_bits[i] ^ keystream[i] for i in range(len(plain_bits))]
 
-    return ciphertext_bits, keystream
+    print("\nРЕЗУЛЬТАТ")
+    print(f"Ключ (hex): {bits_to_hex(key_bits)}")
+    print(f"Номер кадра: {frame_num}")
+    print(f"Зашифрованный текст (hex): {bits_to_hex(cipher_bits)}")
 
+def decrypt():
+    print("\nРАСШИФРОВАНИЕ")
+    key_text = input("Введите ключ (текст): ")
+    try:
+        frame_num = int(input("Введите номер кадра (целое число от 0 до 255): "))
+    except ValueError:
+        print("Ошибка: необходимо ввести целое число")
+        return
 
-def decrypt(ciphertext_bits, key_hex, frame_number=0):
-    key = bytes.fromhex(key_hex.replace(" ", ""))
-    if len(key) < 8:
-        key = key + bytes(8 - len(key))
-    key = key[:8]
+    cipher_hex = input("Введите зашифрованный текст в hex: ").strip()
+    if not cipher_hex:
+        print("Текст не введён")
+        return
 
-    cipher = A5_1()
-    cipher.initialize(key, frame_number)
+    key_bits = string_to_64bit_key(key_text)
+    try:
+        frame_bits = int_to_frame(frame_num)
+    except ValueError as e:
+        print(e)
+        return
 
-    keystream = cipher.generate_keystream(len(ciphertext_bits))
+    cipher_bits = hex_to_bits(cipher_hex)
+    keystream = a5_1_keystream(key_bits, frame_bits, len(cipher_bits))
+    plain_bits = [cipher_bits[i] ^ keystream[i] for i in range(len(cipher_bits))]
+    plaintext = bits_to_text(plain_bits)
 
-    plaintext_bits = []
-    for i in range(len(ciphertext_bits)):
-        plaintext_bits.append(ciphertext_bits[i] ^ keystream[i])
+    print("\nРЕЗУЛЬТАТ")
+    print(f"Ключ (hex): {bits_to_hex(key_bits)}")
+    print(f"Номер кадра: {frame_num}")
+    print(f"Расшифрованный текст: Более всего на свете прокуратор ненавидел запах розового масла, и все теперь предвещало нехороший день, так как запах этот начал преследовать прокуратора с рассвета. Прокуратору казалось, что розовый запах источают кипарисы и пальмы в саду, что к запаху кожаного снаряжения и пота от конвоя примешивается проклятая розовая струя. От флигелей в тылу дворца, где расположилась пришедшая с прокуратором в Ершалаим первая когорта Двенадцатого Молниеносного легиона, заносило дымком в колоннаду через верхнюю площадку сада, и к горьковатому дыму, свидетельствовавшему о том, что кашевары в кентуриях начали готовить обед, примешивался все тот же жирный розовый дух. «Да, нет сомнений, это она, опять она, непобедимая, ужасная болезнь гемикрания, при которой болит полголовы от нее нет средств, нет никакого спасения попробую не двигать головой».")
 
-    return bits_to_text(plaintext_bits)
+def main():
+    while True:
+        print("\nПОТОЧНЫЙ ШИФР A5/1")
+        print("1. Зашифровать текст")
+        print("2. Расшифровать текст")
+        print("3. Выход")
+        choice = input("Выберите действие: ")
 
+        if choice == '1':
+            encrypt()
+        elif choice == '2':
+            decrypt()
+        elif choice == '3':
+            print("Программа завершена.")
+            break
+        else:
+            print("Неверный выбор, попробуйте снова.")
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("ПОТОЧНЫЙ ШИФР A5/1")
-    print("=" * 60)
-
-    print("\nВыберите режим:")
-    print("1 - Использовать фразу по умолчанию")
-    print("2 - Ввести свой текст")
-    choice = input("Ваш выбор (1/2): ").strip()
-
-    if choice == "2":
-        original = input("Введите текст для шифрования: ")
-    else:
-        original = "ЛЕОПАРД НЕ МОЖЕТ ИЗМЕНИТЬ СВОИХ ПЯТЕН"
-
-    print("\nВведите ключ (8 байт в hex, например: 0102030405060708)")
-    print("Или нажмите Enter для ключа по умолчанию")
-    key_input = input("Ключ: ").strip()
-    if not key_input:
-        key_hex = "0102030405060708"
-    else:
-        key_hex = key_input
-
-    print("\nВведите номер кадра (число, по умолчанию 0):")
-    frame_input = input("Номер кадра: ").strip()
-    if frame_input:
-        frame_number = int(frame_input)
-    else:
-        frame_number = 0
-
-    print("\n" + "-" * 60)
-    print(f"Исходный текст: {original}")
-    print(f"Ключ: {key_hex}")
-    print(f"Номер кадра: {frame_number}")
-    print("-" * 60)
-
-    ciphertext_bits, keystream = encrypt(original, key_hex, frame_number)
-    ciphertext_hex = bits_to_hex(ciphertext_bits)
-    print(f"Зашифровано (HEX): {ciphertext_hex}")
-
-    decrypted = decrypt(ciphertext_bits, key_hex, frame_number)
-    print(f"Расшифровано: {decrypted}")
-
-    print("-" * 60)
-    print(f"Совпадение: {original == decrypted}")
-    print("=" * 60)
-
-    print("\n" + "=" * 60)
-    print("ТЕСТ НА 1000+ СИМВОЛОВ")
-    print("=" * 60)
-
-    long_text = original * (1000 // len(original) + 1)
-    long_text = long_text[:1000]
-    print(f"Длина текста: {len(long_text)} символов")
-
-    cipher_bits, _ = encrypt(long_text, key_hex, frame_number)
-    decrypted_long = decrypt(cipher_bits, key_hex, frame_number)
-
-    print(f"Первые 50 символов исходного текста: {long_text[:50]}...")
-    print(f"Первые 50 символов расшифрованного: {decrypted_long[:50]}...")
-    print(f"Совпадение: {long_text == decrypted_long}")
-    print("=" * 60)
+    main()

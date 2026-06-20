@@ -14,6 +14,7 @@ num_to_char = {i: char for i, char in enumerate(ALPHABET)}
 def encrypt(text):
     text = text.upper()
     result = []
+
     for char in text:
         if char == ' ':
             result.append(' ')
@@ -23,24 +24,41 @@ def encrypt(text):
             result.append(num_to_char[L])
         else:
             result.append(char)
+
     return ''.join(result)
 
 
 def decrypt(ciphertext):
-    return encrypt(ciphertext)
+    return encrypt(ciphertext)  # Атбаш симметричен
 
 
-original = "ЛЕОПАРД НЕ МОЖЕТ ИЗМЕНИТЬ СВОИХ ПЯТЕН"
+while True:
+    print("\n" + "=" * 50)
+    print("ШИФР АТБАШ")
+    print("=" * 50)
+    print("1. Зашифровать")
+    print("2. Расшифровать")
+    print("3. Выход")
 
-print("=" * 60)
-print("ШИФР АТБАШ")
-print("=" * 60)
-print(f"Исходный текст: {original}")
-encrypted = encrypt(original)
-print(f"Зашифровано: {encrypted}")
-print("-" * 60)
-decrypted = decrypt(encrypted)
-print(f"Расшифровано: {decrypted}")
-print("-" * 60)
-print(f"Совпадение: {original == decrypted}")
-print("=" * 60)
+    choice = input("\nВыберите действие: ")
+
+    if choice == "1":
+        text = input("Введите текст для шифрования: ")
+        encrypted = encrypt(text)
+
+        print("\nРезультат:")
+        print(encrypted)
+
+    elif choice == "2":
+        text = input("Введите текст для расшифрования: ")
+        decrypted = decrypt(text)
+
+        print("\nРезультат:")
+        print(decrypted)
+
+    elif choice == "3":
+        print("Выход из программы...")
+        break
+
+    else:
+        print("Неверный выбор!")

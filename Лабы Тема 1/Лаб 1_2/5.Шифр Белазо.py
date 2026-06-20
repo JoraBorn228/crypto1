@@ -1,48 +1,40 @@
 # -*- coding: utf-8 -*-
 """
 ПРОСТОЙ ШИФР БЕЛАЗО
-Русский алфавит (33 буквы с Ъ)
-Ключевое слово: КЛЮЧ
-Пробелы сохраняются
 """
 
-# Алфавит
 ALPHABET = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
-N = 33  # длина алфавита
+N = 33
 
-# Словари для перевода
 char_to_num = {char: i for i, char in enumerate(ALPHABET)}
 num_to_char = {i: char for i, char in enumerate(ALPHABET)}
 
-# Ключ (можно изменить на любой)
 KEYWORD = "КЛЮЧ"
 
 
 def get_key_nums(keyword):
-    """Переводит ключевое слово в числа"""
     return [char_to_num[char] for char in keyword.upper() if char in char_to_num]
 
 
 def encrypt(text, keyword=KEYWORD):
-    """Шифрование текста по Белазо"""
     text = text.upper()
     key_nums = get_key_nums(keyword)
     key_length = len(key_nums)
 
     result = []
-    key_idx = 0  # индекс в ключе
+    key_idx = 0
 
     for char in text:
         if char == ' ':
-            result.append(' ')  # пробел остаётся
+            result.append(' ')
         elif char in char_to_num:
-            vi = char_to_num[char]  # номер исходной буквы
-            ki = key_nums[key_idx % key_length]  # буква ключа
-            wi = (vi + ki) % N  # номер зашифрованной
+            vi = char_to_num[char]
+            ki = key_nums[key_idx % key_length]
+            wi = (vi + ki) % N
             result.append(num_to_char[wi])
-            key_idx += 1  # ключ двигаем только на буквах
+            key_idx += 1
         else:
-            result.append(char)  # другие символы
+            result.append(char)
 
     return ''.join(result)
 
@@ -59,9 +51,9 @@ def decrypt(ciphertext, keyword=KEYWORD):
         if char == ' ':
             result.append(' ')
         elif char in char_to_num:
-            wi = char_to_num[char]  # номер зашифрованной
-            ki = key_nums[key_idx % key_length]  # буква ключа
-            vi = (wi - ki) % N  # номер исходной
+            wi = char_to_num[char]
+            ki = key_nums[key_idx % key_length]
+            vi = (wi - ki) % N
             result.append(num_to_char[vi])
             key_idx += 1
         else:
@@ -70,27 +62,43 @@ def decrypt(ciphertext, keyword=KEYWORD):
     return ''.join(result)
 
 
-original = "ЛЕОПАРД НЕ МОЖЕТ ИЗМЕНИТЬ СВОИХ ПЯТЕН"
+while True:
+    print("\n" + "=" * 50)
+    print("ПРОСТОЙ ШИФР БЕЛАЗО")
+    print("=" * 50)
+    print("1. Зашифровать")
+    print("2. Расшифровать")
+    print("3. Выход")
 
-print("=" * 60)
-print("ПРОСТОЙ ШИФР БЕЛАЗО")
-print("=" * 60)
-encrypted = encrypt(original)
+    choice = input("\nВыберите действие: ")
 
-print(f"Исходный текст: {original}")
-print(f"Зашифровано: {encrypted}")
+    if choice == "1":
+        text = input("Введите текст для шифрования: ")
+        key = input("Введите ключ (Enter = КЛЮЧ): ").strip()
 
-print("-" * 60)
+        if not key:
+            key = KEYWORD
 
-# Шифрование
-encrypted = encrypt(original)
-print(f"Зашифровано: {encrypted}")
+        encrypted = encrypt(text, key)
 
-# Расшифровка
-decrypted = decrypt(encrypted)
-print(f"Расшифровано: {decrypted}")
+        print("\nРезультат шифрования:")
+        print(encrypted)
 
-# Проверка
-print("-" * 60)
-print(f"Совпадение: {original == decrypted}")
-print("=" * 60)
+    elif choice == "2":
+        text = input("Введите текст для расшифрования: ")
+        key = input("Введите ключ (Enter = КЛЮЧ): ").strip()
+
+        if not key:
+            key = KEYWORD
+
+        decrypted = decrypt(text, key)
+
+        print("\nРезультат расшифрования:")
+        print(decrypted)
+
+    elif choice == "3":
+        print("Выход из программы...")
+        break
+
+    else:
+        print("Неверный выбор!")
