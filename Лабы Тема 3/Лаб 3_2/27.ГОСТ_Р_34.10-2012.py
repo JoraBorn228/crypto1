@@ -79,9 +79,22 @@ def keygen(curve, P, q):
     return d, Q
 
 
-def sign(message, curve, P, q, d):
+def sign(message, curve, P, q, d, k=None):
     alpha = hash_func(message, q)
     e = alpha % q or 1
+    if not 0 < d < q:
+        raise ValueError(f"Закрытый ключ d должен быть в диапазоне 1..{q - 1}.")
+    if k is not None:
+        if not 0 < k < q:
+            raise ValueError(f"Одноразовый ключ k должен быть в диапазоне 1..{q - 1}.")
+        C = curve.mul(k, P)
+        if C is None:
+            raise ValueError("Выбранный k дал точку на бесконечности; введите другое k.")
+        r = C[0] % q
+        s = (r * d + k * e) % q
+        if r == 0 or s == 0:
+            raise ValueError("Для выбранного k получено r=0 или s=0; введите другое k.")
+        return r, s, e, k
     while True:
         k = random.randint(1, q - 1)
         C = curve.mul(k, P)
@@ -114,29 +127,47 @@ def main():
     print("=" * 60)
     print("ГОСТ Р 34.10-2012  —  Цифровая подпись (эллиптические кривые)")
     print("=" * 60)
-    print(f"Сообщение  : {СООБЩЕНИЕ!r}")
     print(f"Кривая     : y² ≡ x³ + {CURVE.a}x + {CURVE.b}  (mod {CURVE.p})")
     print(f"Генератор  : P = {P_BASE}")
     print(f"Порядок    : q = {Q_ORDER}")
-
-    d, Q_pub = keygen(CURVE, P_BASE, Q_ORDER)
-    print(f"\nКлючи")
-    print(f"  Закрытый d = {d}")
-    print(f"  Открытый Q = {Q_pub}")
-
-    r, s, e, k = sign(СООБЩЕНИЕ, CURVE, P_BASE, Q_ORDER, d)
-    print(f"\nПодпись")
-    print(f"  Хэш (e) = {e}")
-    print(f"  Сессион k = {k}")
-    print(f"  r         = {r}")
-    print(f"  s         = {s}")
-
-    ok = verify(СООБЩЕНИЕ, r, s, CURVE, P_BASE, Q_pub, Q_ORDER)
-    print(f"\nПроверка подписи : {'ВЕРНА' if ok else 'НЕ ВЕРНА'}")
-
-    print("\n--- Проверка с изменённым сообщением ---")
-    ok2 = verify(СООБЩЕНИЕ + "!", r, s, CURVE, P_BASE, Q_pub, Q_ORDER)
-    print(f"Проверка (изменённое) : {'ВЕРНА' if ok2 else 'НЕ ВЕРНА'}")
+    print("Учебные малые параметры: это демонстрация алгоритма, не промышленный профиль ГОСТ.")
+    while True:
+        print("\n1 - Создать подпись (ввести сообщение, d и одноразовый k)")
+        print("2 - Проверить подпись (ввести сообщение, r, s и открытый ключ Q)")
+        print("0 - Выход")
+        choice = input("Ваш выбор: ").strip()
+        if choice == "0":
+            break
+        try:
+            if choice == "1":
+                message = input("Введите сообщение: ")
+                if not message:
+                    raise ValueError("Сообщение не должно быть пустым.")
+                d = int(input(f"Введите закрытый ключ d (1..{Q_ORDER - 1}): "))
+                k = int(input(f"Введите одноразовый ключ k (1..{Q_ORDER - 1}): "))
+                if not (0 < d < Q_ORDER):
+                    raise ValueError(f"d должен быть в диапазоне 1..{Q_ORDER - 1}.")
+                Q_pub = CURVE.mul(d, P_BASE)
+                r, s, e, _ = sign(message, CURVE, P_BASE, Q_ORDER, d, k)
+                print(f"Хэш e = {e}")
+                print(f"Открытый ключ Q = {Q_pub}")
+                print(f"Подпись (r, s) = ({r}, {s})")
+                print(f"Проверка созданной подписи: {'ВЕРНА' if verify(message, r, s, CURVE, P_BASE, Q_pub, Q_ORDER) else 'НЕ ВЕРНА'}")
+            elif choice == "2":
+                message = input("Введите исходное сообщение: ")
+                r = int(input("Введите r: "))
+                s = int(input("Введите s: "))
+                qx = int(input("Введите координату Qx: "))
+                qy = int(input("Введите координату Qy: "))
+                Q_pub = (qx, qy)
+                if not CURVE.is_on_curve(Q_pub):
+                    raise ValueError("Открытый ключ Q не принадлежит заданной эллиптической кривой.")
+                valid = verify(message, r, s, CURVE, P_BASE, Q_pub, Q_ORDER)
+                print(f"Результат проверки: {'ПОДПИСЬ ВЕРНА' if valid else 'ПОДПИСЬ НЕВЕРНА'}")
+            else:
+                print("Выберите 0, 1 или 2.")
+        except ValueError as exc:
+            print(f"Ошибка ввода: {exc}")
 
 
 if __name__ == "__main__":

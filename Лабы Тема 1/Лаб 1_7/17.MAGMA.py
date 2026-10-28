@@ -107,7 +107,11 @@ def pad_pkcs7(data: bytes, block_size: int) -> bytes:
 
 
 def unpad_pkcs7(data: bytes) -> bytes:
+    if not data:
+        raise ValueError("Нельзя снять дополнение с пустых данных.")
     pad_len = data[-1]
+    if pad_len < 1 or pad_len > 8 or data[-pad_len:] != bytes([pad_len]) * pad_len:
+        raise ValueError("Неверный ключ или повреждённый шифртекст: дополнение некорректно.")
     return data[:-pad_len]
 
 
@@ -238,18 +242,77 @@ def demo_phrase():
     print("=" * 70)
 
 
+def read_key_from_user() -> bytes:
+    """Запрашивает у пользователя 256-битный ключ в виде 64 hex-символов."""
+    key_hex = input(
+        "Введите ключ (64 hex-символа, например "
+        "ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff): "
+    ).strip()
+    key_hex = key_hex.replace(" ", "")
+    if len(key_hex) != 64:
+        raise ValueError("Ключ должен содержать ровно 64 hex-символа (32 байта).")
+    try:
+        return bytes.fromhex(key_hex)
+    except ValueError as exc:
+        raise ValueError("Ключ должен состоять только из символов 0-9 и A-F.") from exc
+
+
+def interactive_encrypt():
+    plaintext = input("Введите открытый текст: ")
+    key = read_key_from_user()
+    ciphertext = magma_ecb_encrypt(plaintext.encode("utf-8"), key)
+    print(f"Шифртекст (hex): {ciphertext.hex()}")
+
+
+def interactive_decrypt():
+    ciphertext_hex = input("Введите шифртекст в hex: ").strip().replace(" ", "")
+    if not ciphertext_hex:
+        raise ValueError("Шифртекст не должен быть пустым.")
+    if len(ciphertext_hex) % 16 != 0:
+        raise ValueError("Длина hex-шифртекста должна быть кратна 16 символам (8 байт).")
+    try:
+        ciphertext = bytes.fromhex(ciphertext_hex)
+    except ValueError as exc:
+        raise ValueError("Шифртекст должен состоять только из символов 0-9 и A-F.") from exc
+
+    key = read_key_from_user()
+    plaintext = magma_ecb_decrypt(ciphertext, key)
+    try:
+        print(f"Открытый текст: {plaintext.decode('utf-8')}")
+    except UnicodeDecodeError:
+        print(f"Результат (hex): {plaintext.hex()}")
+
+
+def interactive_menu():
+    print("МАГМА использует ключ длиной 256 бит (32 байта).")
+    print("Ключ вводится вручную как 64 шестнадцатеричных символа.")
+    while True:
+        print("\n1 - Зашифровать текст")
+        print("2 - Расшифровать hex-шифртекст")
+        print("3 - Показать тестовый пример ГОСТ")
+        print("0 - Выход")
+        choice = input("Выберите действие: ").strip()
+
+        if choice == "0":
+            break
+        if choice == "3":
+            test_gost_vectors()
+            continue
+        if choice not in ("1", "2"):
+            print("Выберите 0, 1, 2 или 3.")
+            continue
+
+        try:
+            if choice == "1":
+                interactive_encrypt()
+            else:
+                interactive_decrypt()
+        except (ValueError, UnicodeError) as exc:
+            print(f"Ошибка ввода: {exc}")
+
+
 if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("ШИФР МАГМА (ГОСТ Р 34.12-2015)")
     print("=" * 70)
-    
-    gost_ok = test_gost_vectors()
-    long_ok = test_long_text()
-    demo_phrase()
-    
-    print("\n" + "=" * 70)
-    print("ИТОГИ ТЕСТИРОВАНИЯ")
-    print("=" * 70)
-    print(f"Тест ГОСТ: {'ПРОЙДЕН' if gost_ok else 'НЕ ПРОЙДЕН'}")
-    print(f"Тест 1000+ символов: {'ПРОЙДЕН' if long_ok else 'НЕ ПРОЙДЕН'}")
-    print("=" * 70)
+    interactive_menu()

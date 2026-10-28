@@ -203,6 +203,18 @@ class DiffieHellman:
         print(f"  Виртуальный пользователь B выбрал: K_B = {self.K_B}  (СЕКРЕТ — известен только B)")
         return True
 
+    def set_secret_key_B(self, K_B):
+        """Задаёт секретный ключ пользователя B, введённый вручную."""
+        if self.n is None:
+            print("  Ошибка: сначала установите публичные параметры!")
+            return False
+        if not (2 <= K_B <= self.n - 1):
+            print(f"  Ошибка: K_B должно быть в диапазоне [2, n-1 = {self.n - 1}]!")
+            return False
+        self.K_B = K_B
+        print(f"  Секретный ключ B: K_B = {K_B}")
+        return True
+
     # ── Шаг 2: Вычисление открытых ключей ───────────────────
 
     def compute_public_keys(self):
@@ -309,7 +321,7 @@ def print_menu(dh):
     print("  1 — Ввести публичные параметры (n, a) вручную")
     print("  2 — Авто-генерация параметров (простое n и генератор a)")
     print("  3 — Ввести секретный ключ A (K_A) вручную")
-    print("  4 — Авто-генерация секретного ключа B (виртуальный пользователь)")
+    print("  4 — Ввести секретный ключ B (K_B) вручную")
     print("  5 — Вычислить открытые ключи Y_A и Y_B")
     print("  6 — Вычислить общий секрет и проверить протокол")
     print("  7 — Полная демонстрация (авто, от начала до конца)")
@@ -381,7 +393,11 @@ def main():
             if dh.n is None:
                 print("  Ошибка: сначала установите параметры (п.1 или п.2).")
             else:
-                dh.auto_secret_key_B()
+                try:
+                    K_B = int(input(f"  Введите секретный ключ K_B (из [2, {dh.n - 1}]): "))
+                    dh.set_secret_key_B(K_B)
+                except ValueError:
+                    print("  Ошибка: введите целое число.")
 
         elif choice == "5":
             dh.compute_public_keys()

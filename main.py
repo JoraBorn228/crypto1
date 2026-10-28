@@ -88,25 +88,33 @@ def symmetric_menu():
         print("СИММЕТРИЧНЫЕ АЛГОРИТМЫ")
         print("=" * 60)
 
-        print("1 - Блокнот Шеннона")
-        print("2 - A5/1")
-        print("3 - A5/2")
-        print("4 - AES")
+        print("1 - МАГМА (ГОСТ Р 34.12-2015)")
+        print("2 - Блокнот Шеннона")
+        print("3 - A5/1")
+        print("4 - A5/2")
+        print("5 - AES")
+        print("6 - Кузнечик (ГОСТ Р 34.12-2015)")
         print("0 - Назад")
 
         choice = input("\nВаш выбор: ")
 
         if choice == "1":
-            run_script("Лабы Тема 1/Лаб 1_5/13.Одноразовый блокнот К.Шеннона.py")
+            run_script("Лабы Тема 1/Лаб 1_7/17.MAGMA.py")
 
         elif choice == "2":
-            run_script("Лабы Тема 1/Лаб 1_6/15.A5_1.py")
+            run_script("Лабы Тема 1/Лаб 1_5/13.Одноразовый блокнот К.Шеннона.py")
 
         elif choice == "3":
-            run_script("Лабы Тема 1/Лаб 1_6/16.A5_2.py")
+            run_script("Лабы Тема 1/Лаб 1_6/15.A5_1.py")
 
         elif choice == "4":
+            run_script("Лабы Тема 1/Лаб 1_6/16.A5_2.py")
+
+        elif choice == "5":
             run_script("Лабы Тема 1/Лаб 1_7/19.AES.py")
+
+        elif choice == "6":
+            run_script("Лабы Тема 1/Лаб 1_7/20.KUZNECHIK.py")
 
         elif choice == "0":
             return
@@ -124,25 +132,17 @@ def asymmetric_menu():
         print("АСИММЕТРИЧНЫЕ АЛГОРИТМЫ")
         print("=" * 60)
 
-        print("1 - RSA")
-        print("2 - ElGamal")
-        print("3 - ECC")
-        print("4 - Диффи-Хеллман")
+        print("1 - RSA (шифрование)")
+        print("2 - Диффи-Хеллман")
         print("0 - Назад")
 
         choice = input("\nВаш выбор: ")
 
         if choice == "1":
-            run_script("Лабы Тема 3/Лаб 3_1/24.RSA.py")
+            run_script("Лабы Тема 2/Лаб 2_1/21-23.RSA_Elgamal_ECC.py")
 
         elif choice == "2":
-            run_script("Лабы Тема 3/Лаб 3_1/21-23.RSA_Elgamal_ECC.py")
-
-        elif choice == "3":
-            run_script("Лабы Тема 3/Лаб 3_1/21-23.RSA_Elgamal_ECC.py")
-
-        elif choice == "4":
-            run_script("Лабы Тема 2/Лаб 2_2/20.Диффи-Хеллман.py")
+            run_script("Лабы Тема 4/Лаб 4_1/28.Диффи-Хеллман.py")
 
         elif choice == "0":
             return
@@ -162,6 +162,7 @@ def signature_menu():
 
         print("1 - RSA подпись")
         print("2 - ГОСТ Р 34.10-94")
+        print("3 - ГОСТ Р 34.10-2012")
         print("0 - Назад")
 
         choice = input("\nВаш выбор: ")
@@ -171,6 +172,9 @@ def signature_menu():
 
         elif choice == "2":
             run_script("Лабы Тема 3/Лаб 3_2/26.ГОСТ_Р_34.10-94.py")
+
+        elif choice == "3":
+            run_script("Лабы Тема 3/Лаб 3_2/27.ГОСТ_Р_34.10-2012.py")
 
         elif choice == "0":
             return

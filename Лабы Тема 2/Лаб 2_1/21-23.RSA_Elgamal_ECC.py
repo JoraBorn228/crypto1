@@ -125,38 +125,35 @@ class RSACipher:
     # ---- Установка ключа ----
     def set_key(self, prime_p, prime_q, exp_e):
         if not is_prime(prime_p):
-            print("Ошибка: p не является простым числом!")
-            sys.exit(1)
+            raise ValueError("p не является простым числом.")
         if not is_prime(prime_q):
-            print("Ошибка: q не является простым числом!")
-            sys.exit(1)
+            raise ValueError("q не является простым числом.")
         if prime_p == prime_q:
-            print("Ошибка: p и q должны быть разными!")
-            sys.exit(1)
+            raise ValueError("p и q должны быть разными.")
+
+        N = prime_p * prime_q
+        phi = (prime_p - 1) * (prime_q - 1)
+
+        if exp_e <= 1 or exp_e >= phi:
+            raise ValueError("E должно быть в диапазоне 1 < E < ф(N).")
+
+        if gcd(exp_e, phi) != 1:
+            raise ValueError("E и ф(N) должны быть взаимно просты.")
+
+        if N < 32:
+            raise ValueError(f"Модуль N = {N} слишком мал для кодирования алфавита.")
+
+        private_exponent = mod_inverse(exp_e, phi)
+
+        if exp_e == private_exponent:
+            raise ValueError("Открытый и секретный показатели совпадают; выберите другое E.")
 
         self.p = prime_p
         self.q = prime_q
-        self.N = self.p * self.q
-        self.phi = (self.p - 1) * (self.q - 1)
-
-        if exp_e <= 1 or exp_e >= self.phi:
-            print("Ошибка: E должно быть в диапазоне 1 < E < ф(N)!")
-            sys.exit(1)
-
-        if gcd(exp_e, self.phi) != 1:
-            print("Ошибка: E и ф(N) не взаимно просты!")
-            sys.exit(1)
-
-        if self.N < 32:
-            print(f"Ошибка: модуль N = {self.N} слишком мал!")
-            sys.exit(1)
-
+        self.N = N
+        self.phi = phi
         self.E = exp_e
-        self.D = mod_inverse(self.E, self.phi)
-
-        if self.E == self.D:
-            print("Ошибка: открытый и секретный ключи совпадают, это недопустимо.")
-            sys.exit(1)
+        self.D = private_exponent
 
         self.key_set = True
 
