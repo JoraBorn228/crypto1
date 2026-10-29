@@ -3,13 +3,26 @@
 17. Шифр МАГМА (ГОСТ Р 34.12-2015)
 
 Реализация блочного шифра «Магма» с режимом ECB.
-Блок: 64 бита, ключ: 256 бит, 32 раунда.
-Тестирование по ГОСТ Р 34.12-2015 (Приложение А).
+Блок: 64 бита, ключ: 256 бит, 32 раунда (сеть Фейстеля).
+Тестирование по ГОСТ Р 34.12-2018 (Приложение А).
+
+Источник: ЛАБКРИПТ_2022, Блок G, задание 17.
+
+ВВОД (как в методичке):
+  - Открытый текст: произвольная строка (кодируется в UTF-8)
+  - Ключ: 64 шестнадцатеричных символа (256 бит)
+
+АЛГОРИТМ (по ГОСТ Р 34.12-2018 раздел 5):
+  Блок a = a1|a0 (a1 — старшие 32 бит, a0 — младшие 32 бит).
+  Раунд: G[k](a1,a0) = (a0, g[k](a0) XOR a1)
+  Последний раунд: G*[k](a1,a0) = (g[k](a0) XOR a1, a0)
+  Ключ K делится на K1..K8 (big-endian, 32 бит каждый).
+  Расписание: K1..K8 × 3, затем K8..K1.
 """
 
-import struct
-
-DEFAULT_PHRASE = "Леопард не может изменить своих пятен"
+# ─────────────────────────────────────────────
+#  S-блоки ГОСТ Р 34.12-2015 (Приложение А)
+# ─────────────────────────────────────────────
 
 S_BOX = (
     (12, 4, 6, 2, 10, 5, 11, 9, 14, 8, 13, 7, 0, 3, 15, 1),
@@ -23,20 +36,11 @@ S_BOX = (
 )
 
 
-def _build_inverse_boxes():
-    inv = []
-    for box in S_BOX:
-        rev = [0] * 16
-        for x in range(16):
-            rev[box[x]] = x
-        inv.append(tuple(rev))
-    return tuple(inv)
+# ─────────────────────────────────────────────
+#  Нелинейное преобразование T (8 × S-блоков)
+# ─────────────────────────────────────────────
 
-
-S_BOX_INV = _build_inverse_boxes()
-
-
-def t_direct(a):
+def t_direct(a: int) -> int:
     a &= 0xFFFFFFFF
     out = 0
     for i in range(8):
@@ -45,31 +49,36 @@ def t_direct(a):
     return out & 0xFFFFFFFF
 
 
-def rotl32(x, n):
+# ─────────────────────────────────────────────
+#  Циклический сдвиг влево на 11 бит
+# ─────────────────────────────────────────────
+
+def rotl32(x: int, n: int) -> int:
     x &= 0xFFFFFFFF
     return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
 
 
-def g_round(k, a):
+# ─────────────────────────────────────────────
+#  Раундовая функция g[k](a) = rotl11(T(a + k mod 2^32))
+# ─────────────────────────────────────────────
+
+def g_round(k: int, a: int) -> int:
     x = (a + k) & 0xFFFFFFFF
     x = t_direct(x)
     return rotl32(x, 11)
 
 
-def G_feistel(k, a1, a0):
-    return a0 & 0xFFFFFFFF, (g_round(k, a0) ^ a1) & 0xFFFFFFFF
+# ─────────────────────────────────────────────
+#  Расписание ключей
+#  K = K1|K2|...|K8 (big-endian 32-бит слова)
+#  Раунды 1-24: K1,K2,...,K8 повторить 3 раза
+#  Раунды 25-32: K8,K7,...,K1
+# ─────────────────────────────────────────────
 
-
-def inv_G_feistel(k, new_a1, new_a0):
-    old_a0 = new_a1
-    old_a1 = (g_round(k, new_a1) ^ new_a0) & 0xFFFFFFFF
-    return old_a1, old_a0
-
-
-def round_keys_from_key(key32: bytes):
+def round_keys_from_key(key32: bytes) -> list:
     if len(key32) != 32:
         raise ValueError("Ключ должен быть 32 байта (256 бит)")
-    K = [int.from_bytes(key32[4 * i : 4 * (i + 1)], "little") for i in range(8)]
+    K = [int.from_bytes(key32[4 * i: 4 * (i + 1)], "big") for i in range(8)]
     rk = []
     for i in range(32):
         if i < 24:
@@ -79,27 +88,43 @@ def round_keys_from_key(key32: bytes):
     return rk
 
 
-def encrypt_block_magma(block: bytes, rk) -> bytes:
-    a0 = int.from_bytes(block[0:4], "little")
-    a1 = int.from_bytes(block[4:8], "little")
+# ─────────────────────────────────────────────
+#  Шифрование одного 64-битного блока (big-endian)
+#  a = a1|a0  (a1 — старшие 32 бит, a0 — младшие 32 бит)
+#  G[k](a1,a0)  = (a0,  g[k](a0) XOR a1)   — обычный раунд
+#  G*[k](a1,a0) = (g[k](a0) XOR a1, a0)    — последний раунд
+# ─────────────────────────────────────────────
+
+def encrypt_block_magma(block: bytes, rk: list) -> bytes:
+    a1 = int.from_bytes(block[0:4], "big")
+    a0 = int.from_bytes(block[4:8], "big")
     for i in range(31):
-        a1, a0 = G_feistel(rk[i], a1, a0)
-    k = rk[31]
-    out1 = (g_round(k, a0) ^ a1) & 0xFFFFFFFF
-    out0 = a0 & 0xFFFFFFFF
-    return out0.to_bytes(4, "little") + out1.to_bytes(4, "little")
+        # G[rk[i]](a1, a0)
+        a1, a0 = a0, (g_round(rk[i], a0) ^ a1) & 0xFFFFFFFF
+    # G*[rk[31]](a1, a0) — без перестановки полублоков
+    b1 = (g_round(rk[31], a0) ^ a1) & 0xFFFFFFFF
+    b0 = a0
+    return b1.to_bytes(4, "big") + b0.to_bytes(4, "big")
 
 
-def decrypt_block_magma(block: bytes, rk) -> bytes:
-    a0 = int.from_bytes(block[0:4], "little")
-    a1 = int.from_bytes(block[4:8], "little")
-    a1_temp = (g_round(rk[31], a0) ^ a1) & 0xFFFFFFFF
-    a0_temp = a0
-    a1, a0 = a1_temp, a0_temp
+def decrypt_block_magma(block: bytes, rk: list) -> bytes:
+    b1 = int.from_bytes(block[0:4], "big")
+    b0 = int.from_bytes(block[4:8], "big")
+    # Обратное G*[rk[31]]: a1 = g[k](b0) XOR b1, a0 = b0
+    a1 = (g_round(rk[31], b0) ^ b1) & 0xFFFFFFFF
+    a0 = b0
+    # Обратные раунды 30..0
     for i in range(30, -1, -1):
-        a1, a0 = inv_G_feistel(rk[i], a1, a0)
-    return a0.to_bytes(4, "little") + a1.to_bytes(4, "little")
+        # Обратное G[rk[i]](a1, a0) = (old_a0, ...) = (a0 прежде свопа)
+        # G дало: new_a1=a0_old, new_a0 = g[k](a0_old) XOR a1_old
+        # Значит: a0_old = a1, a1_old = g[k](a1) XOR a0
+        a1, a0 = (g_round(rk[i], a1) ^ a0) & 0xFFFFFFFF, a1
+    return a1.to_bytes(4, "big") + a0.to_bytes(4, "big")
 
+
+# ─────────────────────────────────────────────
+#  ECB-режим с PKCS#7-дополнением (блок 8 байт)
+# ─────────────────────────────────────────────
 
 def pad_pkcs7(data: bytes, block_size: int) -> bytes:
     pad_len = block_size - (len(data) % block_size)
@@ -120,8 +145,7 @@ def magma_ecb_encrypt(plaintext: bytes, key: bytes) -> bytes:
     padded = pad_pkcs7(plaintext, 8)
     ciphertext = b''
     for i in range(0, len(padded), 8):
-        block = padded[i:i+8]
-        ciphertext += encrypt_block_magma(block, rk)
+        ciphertext += encrypt_block_magma(padded[i:i + 8], rk)
     return ciphertext
 
 
@@ -129,126 +153,49 @@ def magma_ecb_decrypt(ciphertext: bytes, key: bytes) -> bytes:
     rk = round_keys_from_key(key)
     plaintext = b''
     for i in range(0, len(ciphertext), 8):
-        block = ciphertext[i:i+8]
-        plaintext += decrypt_block_magma(block, rk)
+        plaintext += decrypt_block_magma(ciphertext[i:i + 8], rk)
     return unpad_pkcs7(plaintext)
 
 
+# ─────────────────────────────────────────────
+#  Тест по ГОСТ Р 34.12-2018 (Приложение А)
+# ─────────────────────────────────────────────
+
 def test_gost_vectors():
     print("=" * 70)
-    print("ТЕСТ МАГМА по ГОСТ Р 34.12-2015 (Приложение А)")
+    print("ТЕСТ МАГМА по ГОСТ Р 34.12-2018 (Приложение А)")
     print("=" * 70)
-    
     key = bytes.fromhex(
         "ffeeddccbbaa99887766554433221100"
         "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
     )
-    
-    plaintext = bytes.fromhex("fedcba9876543210")
-    expected_ciphertext = bytes.fromhex("4ee901e5c2d8ca3d")
-    
-    rk = round_keys_from_key(key)
+    plaintext          = bytes.fromhex("fedcba9876543210")
+    expected_ciphertext= bytes.fromhex("4ee901e5c2d8ca3d")
+
+    rk         = round_keys_from_key(key)
     ciphertext = encrypt_block_magma(plaintext, rk)
-    
-    print(f"Ключ (hex): {key.hex()}")
-    print(f"Открытый текст: {plaintext.hex()}")
-    print(f"Ожидаемый шифртекст: {expected_ciphertext.hex()}")
-    print(f"Полученный шифртекст: {ciphertext.hex()}")
-    print(f"Тест пройден: {'ДА' if ciphertext == expected_ciphertext else 'НЕТ'}")
-    
-    decrypted = decrypt_block_magma(ciphertext, rk)
-    print(f"Расшифрованный текст: {decrypted.hex()}")
-    print(f"Расшифрование верно: {'ДА' if decrypted == plaintext else 'НЕТ'}")
+    decrypted  = decrypt_block_magma(ciphertext, rk)
+
+    print(f"Ключ (hex)        : {key.hex()}")
+    print(f"Открытый текст    : {plaintext.hex()}")
+    print(f"Ожидаемый шифр    : {expected_ciphertext.hex()}")
+    print(f"Полученный шифр   : {ciphertext.hex()}")
+    print(f"Тест шифрования   : {'ДА ✓' if ciphertext == expected_ciphertext else 'НЕТ ✗'}")
+    print(f"Расшифрование     : {decrypted.hex()}")
+    print(f"Тест расшифрования: {'ДА ✓' if decrypted == plaintext else 'НЕТ ✗'}")
     print("=" * 70)
     return ciphertext == expected_ciphertext and decrypted == plaintext
 
 
-def test_long_text():
-    print("\n" + "=" * 70)
-    print("ТЕСТ НА ТЕКСТЕ 1000+ СИМВОЛОВ")
-    print("=" * 70)
-    
-    long_text = """Криптография — наука о методах обеспечения конфиденциальности, 
-целостности данных, аутентификации и невозможности отказа от авторства. 
-Шифр МАГМА (ГОСТ Р 34.12-2015) является одним из стандартных блочных шифров 
-Российской Федерации. Он использует сеть Фейстеля с 32 раундами, 
-размером блока 64 бита и ключом 256 бит. Шифр МАГМА основан на 
-ГОСТ 28147-89, но использует фиксированные S-блоки. 
-
-Данный алгоритм широко применяется для защиты конфиденциальной информации 
-в государственных и коммерческих системах. Блочные шифры являются основой 
-современной симметричной криптографии и используются во многих протоколах 
-защиты информации.
-
-Сеть Фейстеля — это структура, используемая в большинстве блочных шифров. 
-Она позволяет строить обратимые преобразования из необратимых функций. 
-В каждом раунде одна половина блока преобразуется с помощью раундовой функции 
-и ключа, а затем складывается с другой половиной по модулю 2 (XOR).
-
-Важной особенностью шифра МАГМА является использование нелинейных 
-S-блоков (таблиц замены), которые обеспечивают стойкость к линейному 
-и дифференциальному криптоанализу. Каждый S-блок представляет собой 
-биективное отображение 4-битного входа в 4-битный выход.
-
-Режим ECB (Electronic Codebook) — простейший режим работы блочного шифра, 
-в котором каждый блок шифруется независимо. Этот режим используется 
-для тестирования и отладки, но не рекомендуется для реального применения 
-из-за уязвимости к анализу шаблонов.
-""" * 2
-    
-    print(f"Длина текста: {len(long_text)} символов")
-    
-    key = bytes.fromhex(
-        "ffeeddccbbaa99887766554433221100"
-        "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
-    )
-    
-    plaintext_bytes = long_text.encode('utf-8')
-    print(f"Длина в байтах: {len(plaintext_bytes)}")
-    
-    ciphertext = magma_ecb_encrypt(plaintext_bytes, key)
-    print(f"Длина шифртекста: {len(ciphertext)} байт")
-    print(f"Первые 64 байта шифртекста (hex): {ciphertext[:64].hex()}")
-    
-    decrypted = magma_ecb_decrypt(ciphertext, key)
-    decrypted_text = decrypted.decode('utf-8')
-    
-    print(f"Расшифрование успешно: {'ДА' if decrypted_text == long_text else 'НЕТ'}")
-    print("=" * 70)
-    return decrypted_text == long_text
-
-
-def demo_phrase():
-    print("\n" + "=" * 70)
-    print("ДЕМОНСТРАЦИЯ НА ФРАЗЕ ВАРИАНТА")
-    print("=" * 70)
-    
-    phrase = DEFAULT_PHRASE
-    print(f"Фраза: {phrase}")
-    
-    key = bytes.fromhex(
-        "ffeeddccbbaa99887766554433221100"
-        "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
-    )
-    
-    plaintext_bytes = phrase.encode('utf-8')
-    ciphertext = magma_ecb_encrypt(plaintext_bytes, key)
-    print(f"Шифртекст (hex): {ciphertext.hex()}")
-    
-    decrypted = magma_ecb_decrypt(ciphertext, key)
-    decrypted_text = decrypted.decode('utf-8')
-    print(f"Расшифрованный текст: {decrypted_text}")
-    print(f"Совпадение: {'ДА' if decrypted_text == phrase else 'НЕТ'}")
-    print("=" * 70)
-
+# ─────────────────────────────────────────────
+#  Ввод ключа от пользователя
+# ─────────────────────────────────────────────
 
 def read_key_from_user() -> bytes:
-    """Запрашивает у пользователя 256-битный ключ в виде 64 hex-символов."""
-    key_hex = input(
-        "Введите ключ (64 hex-символа, например "
-        "ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff): "
-    ).strip()
-    key_hex = key_hex.replace(" ", "")
+    """Запрашивает 256-битный ключ в виде 64 hex-символов."""
+    print("Ключ вводится как 64 шестнадцатеричных символа (256 бит).")
+    print("Пример: ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff")
+    key_hex = input("Введите ключ: ").strip().replace(" ", "")
     if len(key_hex) != 64:
         raise ValueError("Ключ должен содержать ровно 64 hex-символа (32 байта).")
     try:
@@ -257,8 +204,14 @@ def read_key_from_user() -> bytes:
         raise ValueError("Ключ должен состоять только из символов 0-9 и A-F.") from exc
 
 
+# ─────────────────────────────────────────────
+#  Интерактивные функции
+# ─────────────────────────────────────────────
+
 def interactive_encrypt():
     plaintext = input("Введите открытый текст: ")
+    if not plaintext:
+        raise ValueError("Текст не должен быть пустым.")
     key = read_key_from_user()
     ciphertext = magma_ecb_encrypt(plaintext.encode("utf-8"), key)
     print(f"Шифртекст (hex): {ciphertext.hex()}")
@@ -269,12 +222,11 @@ def interactive_decrypt():
     if not ciphertext_hex:
         raise ValueError("Шифртекст не должен быть пустым.")
     if len(ciphertext_hex) % 16 != 0:
-        raise ValueError("Длина hex-шифртекста должна быть кратна 16 символам (8 байт).")
+        raise ValueError("Длина hex-шифртекста должна быть кратна 16 символам (8 байт на блок).")
     try:
         ciphertext = bytes.fromhex(ciphertext_hex)
     except ValueError as exc:
         raise ValueError("Шифртекст должен состоять только из символов 0-9 и A-F.") from exc
-
     key = read_key_from_user()
     plaintext = magma_ecb_decrypt(ciphertext, key)
     try:
@@ -283,36 +235,47 @@ def interactive_decrypt():
         print(f"Результат (hex): {plaintext.hex()}")
 
 
+# ─────────────────────────────────────────────
+#  Главное меню
+# ─────────────────────────────────────────────
+
 def interactive_menu():
-    print("МАГМА использует ключ длиной 256 бит (32 байта).")
-    print("Ключ вводится вручную как 64 шестнадцатеричных символа.")
+    print("\n" + "=" * 70)
+    print("ШИФР МАГМА (ГОСТ Р 34.12-2015)  —  Задание 17")
+    print("Сеть Фейстеля, 32 раунда, блок 64 бит, ключ 256 бит")
+    print("Источник: ЛАБКРИПТ_2022, Блок G, стр. 29")
+    print("=" * 70)
+    print()
+    print("ВВОД:")
+    print("  Открытый текст : произвольная строка")
+    print("  Ключ           : 64 шестнадцатеричных символа")
+    print()
+
     while True:
-        print("\n1 - Зашифровать текст")
-        print("2 - Расшифровать hex-шифртекст")
-        print("3 - Показать тестовый пример ГОСТ")
-        print("0 - Выход")
+        print("1 — Зашифровать текст")
+        print("2 — Расшифровать hex-шифртекст")
+        print("3 — Тест по ГОСТ Р 34.12-2018 (контрольный пример)")
+        print("0 — Выход")
         choice = input("Выберите действие: ").strip()
 
         if choice == "0":
             break
-        if choice == "3":
+        elif choice == "3":
             test_gost_vectors()
-            continue
-        if choice not in ("1", "2"):
-            print("Выберите 0, 1, 2 или 3.")
-            continue
-
-        try:
-            if choice == "1":
+        elif choice == "1":
+            try:
                 interactive_encrypt()
-            else:
+            except (ValueError, UnicodeError) as exc:
+                print(f"Ошибка ввода: {exc}")
+        elif choice == "2":
+            try:
                 interactive_decrypt()
-        except (ValueError, UnicodeError) as exc:
-            print(f"Ошибка ввода: {exc}")
+            except (ValueError, UnicodeError) as exc:
+                print(f"Ошибка ввода: {exc}")
+        else:
+            print("Выберите 0, 1, 2 или 3.")
+        print()
 
 
 if __name__ == "__main__":
-    print("\n" + "=" * 70)
-    print("ШИФР МАГМА (ГОСТ Р 34.12-2015)")
-    print("=" * 70)
     interactive_menu()
