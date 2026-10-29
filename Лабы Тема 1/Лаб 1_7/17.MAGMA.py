@@ -9,6 +9,7 @@
 Источник: ЛАБКРИПТ_2022, Блок G, задание 17.
 
 ВВОД (как в методичке):
+
   - Открытый текст: произвольная строка (кодируется в UTF-8)
   - Ключ: 64 шестнадцатеричных символа (256 бит)
 
@@ -208,16 +209,34 @@ def read_key_from_user() -> bytes:
 #  Интерактивные функции
 # ─────────────────────────────────────────────
 
-def interactive_encrypt():
-    plaintext = input("Введите открытый текст: ")
-    if not plaintext:
-        raise ValueError("Текст не должен быть пустым.")
+def interactive_encrypt_hex():
+    """
+    Зашифровать hex-блок (как в контрольном примере ГОСТ Р 34.12-2018).
+    Ввод : hex-строка, кратная 16 символам (= 8 байт на блок).
+    Пример: PT = fedcba9876543210  →  CT = 4ee901e5c2d8ca3d
+    """
+    pt_hex = input("Введите открытый текст в hex (кратно 16 символам): ").strip().replace(" ", "")
+    if not pt_hex:
+        raise ValueError("Блок не должен быть пустым.")
+    if len(pt_hex) % 16 != 0:
+        raise ValueError("Длина hex должна быть кратна 16 (8 байт на блок).")
+    try:
+        pt_bytes = bytes.fromhex(pt_hex)
+    except ValueError as exc:
+        raise ValueError("Допустимы только символы 0-9 и A-F.") from exc
     key = read_key_from_user()
-    ciphertext = magma_ecb_encrypt(plaintext.encode("utf-8"), key)
+    rk = round_keys_from_key(key)
+    ciphertext = b''
+    for i in range(0, len(pt_bytes), 8):
+        ciphertext += encrypt_block_magma(pt_bytes[i:i + 8], rk)
     print(f"Шифртекст (hex): {ciphertext.hex()}")
 
 
+
+
+
 def interactive_decrypt():
+    """Расшифровать hex-шифртекст."""
     ciphertext_hex = input("Введите шифртекст в hex: ").strip().replace(" ", "")
     if not ciphertext_hex:
         raise ValueError("Шифртекст не должен быть пустым.")
@@ -247,24 +266,22 @@ def interactive_menu():
     print("=" * 70)
     print()
     print("ВВОД:")
-    print("  Открытый текст : произвольная строка")
-    print("  Ключ           : 64 шестнадцатеричных символа")
+    print("  Открытый текст : hex-строка, кратная 16 символам (8 байт на блок)")
+    print("  Ключ           : 64 шестнадцатеричных символа (256 бит)")
+    print("  Пример ГОСТ    : PT=fedcba9876543210 → CT=4ee901e5c2d8ca3d")
     print()
 
     while True:
-        print("1 — Зашифровать текст")
+        print("1 — Зашифровать hex-блок")
         print("2 — Расшифровать hex-шифртекст")
-        print("3 — Тест по ГОСТ Р 34.12-2018 (контрольный пример)")
         print("0 — Выход")
         choice = input("Выберите действие: ").strip()
 
         if choice == "0":
             break
-        elif choice == "3":
-            test_gost_vectors()
         elif choice == "1":
             try:
-                interactive_encrypt()
+                interactive_encrypt_hex()
             except (ValueError, UnicodeError) as exc:
                 print(f"Ошибка ввода: {exc}")
         elif choice == "2":
@@ -273,7 +290,7 @@ def interactive_menu():
             except (ValueError, UnicodeError) as exc:
                 print(f"Ошибка ввода: {exc}")
         else:
-            print("Выберите 0, 1, 2 или 3.")
+            print("Выберите 0, 1 или 2.")
         print()
 
 
