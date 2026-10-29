@@ -127,7 +127,7 @@ class DiffieHellman:
     """
     Протокол обмена ключами Диффи–Хеллмана.
 
-    Публичные параметры:  n (простое), a (примитивный корень по модулю n)
+    Публичные параметры:  n (простое), a (1 < a < n)
     Секретные ключи:      K_A, K_B ∈ [2, n-1]
     Открытые ключи:       Y_A = a^K_A mod n,  Y_B = a^K_B mod n
     Общий секрет:         K = Y_B^K_A mod n  =  Y_A^K_B mod n
@@ -135,7 +135,7 @@ class DiffieHellman:
 
     def __init__(self):
         self.n = None      # публичный модуль (большое простое)
-        self.a = None      # публичный генератор (примитивный корень)
+        self.a = None      # публичное основание a
         self.K_A = None    # секретный ключ пользователя A
         self.K_B = None    # секретный ключ виртуального пользователя B
         self.Y_A = None    # открытый ключ A
@@ -147,7 +147,9 @@ class DiffieHellman:
 
     def set_params(self, n, a):
         """Устанавливает публичные параметры n и a с проверками."""
-        if not is_prime(n) and not miller_rabin(n):
+        # Не используем пробное деление для больших n: проверяем простоту
+        # тестом Миллера–Рабина с достаточным числом раундов.
+        if not miller_rabin(n, k=32):
             print("  Ошибка: n должно быть простым числом!")
             return False
         if not (1 < a < n):
@@ -160,11 +162,14 @@ class DiffieHellman:
         self.shared_K_A = self.shared_K_B = None
         print(f"\n  Публичные параметры установлены:")
         print(f"    n = {n}")
-        print(f"    a = {a}  (генератор)")
+        print(f"    a = {a}  (основание степени)")
         return True
 
-    def auto_generate_params(self, bits=64):
-        """Автоматически генерирует большое простое n и примитивный корень a."""
+    def auto_generate_params(self, bits=24):
+        """Генерирует учебные параметры; подбор корня ограничен 32 битами."""
+        if not 4 <= bits <= 32:
+            print("  Ошибка: учебная автогенерация поддерживает битность от 4 до 32.")
+            return False
         print(f"\n  Генерация простого числа ({bits} бит)...")
         n = generate_prime(bits)
         print(f"  Найдено простое n = {n}")
@@ -191,6 +196,8 @@ class DiffieHellman:
             print(f"  Ошибка: K_A должно быть в диапазоне [2, n-1 = {self.n - 1}]!")
             return False
         self.K_A = K_A
+        self.Y_A = self.Y_B = None
+        self.shared_K_A = self.shared_K_B = None
         print(f"  Секретный ключ A: K_A = {K_A}")
         return True
 
@@ -200,6 +207,8 @@ class DiffieHellman:
             print("  Ошибка: сначала установите публичные параметры!")
             return False
         self.K_B = random.randint(2, self.n - 1)
+        self.Y_A = self.Y_B = None
+        self.shared_K_A = self.shared_K_B = None
         print(f"  Виртуальный пользователь B выбрал: K_B = {self.K_B}  (СЕКРЕТ — известен только B)")
         return True
 
@@ -212,6 +221,8 @@ class DiffieHellman:
             print(f"  Ошибка: K_B должно быть в диапазоне [2, n-1 = {self.n - 1}]!")
             return False
         self.K_B = K_B
+        self.Y_A = self.Y_B = None
+        self.shared_K_A = self.shared_K_B = None
         print(f"  Секретный ключ B: K_B = {K_B}")
         return True
 
@@ -240,7 +251,7 @@ class DiffieHellman:
         Шаг 3 алгоритма:
           K_A: K = Y_B^K_A mod n
           K_B: K = Y_A^K_B mod n
-          Проверка: K_A == K_B
+          Проверка: вычисленные сторонами значения K совпадают и не равны 1
         """
         if None in (self.Y_A, self.Y_B, self.K_A, self.K_B):
             print("  Ошибка: сначала вычислите открытые ключи!")
@@ -253,11 +264,16 @@ class DiffieHellman:
         print(f"    A: K = Y_B^K_A mod n = {self.Y_B}^{self.K_A} mod {self.n} = {self.shared_K_A}")
         print(f"    B: K = Y_A^K_B mod n = {self.Y_A}^{self.K_B} mod {self.n} = {self.shared_K_B}")
 
+        if self.shared_K_A == self.shared_K_B == 1:
+            print("\n  ✗ ОШИБКА: общий секрет равен 1 и считается недопустимым.")
+            print("    Выберите другие секретные ключи A и B.")
+            self.shared_K_A = self.shared_K_B = None
+            return False
         if self.shared_K_A == self.shared_K_B:
-            print(f"\n  ✓ ПРОВЕРКА ПРОЙДЕНА: K_A = K_B = {self.shared_K_A}")
+            print(f"\n  ✓ ПРОВЕРКА ПРОЙДЕНА: K у A = K у B = {self.shared_K_A}")
             print(f"    Общий секретный ключ успешно выработан!")
         else:
-            print(f"\n  ✗ ОШИБКА: K_A ≠ K_B  ({self.shared_K_A} ≠ {self.shared_K_B})")
+            print(f"\n  ✗ ОШИБКА: K у A ≠ K у B  ({self.shared_K_A} ≠ {self.shared_K_B})")
         return self.shared_K_A == self.shared_K_B
 
     # ── Полная демонстрация протокола ────────────────────────
@@ -272,7 +288,7 @@ class DiffieHellman:
 
         print("\n  Шаг 1. Публичные параметры (известны всем):")
         print(f"    n = {self.n}  (простое число)")
-        print(f"    a = {self.a}  (1 < a < n, примитивный корень)")
+        print(f"    a = {self.a}  (1 < a < n)")
 
         print("\n  Шаг 2. Выбор секретных ключей:")
         print(f"    Пользователь A выбирает K_A = {self.K_A}  (из интервала [2, n-1])")
@@ -324,7 +340,7 @@ def print_menu(dh):
     print("  4 — Ввести секретный ключ B (K_B) вручную")
     print("  5 — Вычислить открытые ключи Y_A и Y_B")
     print("  6 — Вычислить общий секрет и проверить протокол")
-    print("  7 — Полная демонстрация (авто, от начала до конца)")
+    print("  7 — Пошаговый обмен (параметры, ключи, проверка)")
     print("  8 — Пример из методички (малые числа)")
     print("  0 — Выход")
     print()
@@ -357,6 +373,46 @@ def demo_textbook(dh):
     dh.compute_shared_secret()
 
 
+def manual_protocol(dh):
+    """Последовательно запрашивает параметры и ключи, затем проверяет обмен."""
+    print("\n" + "─" * 60)
+    print("  ПОШАГОВЫЙ ОБМЕН ДИФФИ-ХЕЛЛМАНА")
+    print("─" * 60)
+
+    print("\n1. Введите публичные параметры")
+    try:
+        n = int(input("  Простое число n: "))
+        a = int(input("  Основание a (1 < a < n): "))
+    except ValueError:
+        print("  Ошибка: введите целые числа.")
+        return False
+    if not dh.set_params(n, a):
+        return False
+
+    while True:
+        print("\n2. Введите секретные ключи A и B")
+        try:
+            K_A = int(input(f"  Секретный ключ A (2..{n - 1}): "))
+            K_B = int(input(f"  Секретный ключ B (2..{n - 1}): "))
+        except ValueError:
+            print("  Ошибка: введите целые числа; повторите ввод ключей.")
+            continue
+
+        if not dh.set_secret_key_A(K_A) or not dh.set_secret_key_B(K_B):
+            print("  Повторите ввод секретных ключей.")
+            continue
+
+        print("\n3. Вычислите открытые ключи")
+        if not dh.compute_public_keys():
+            return False
+
+        print("\n4. Вычислите общий секрет и проверьте протокол")
+        if dh.compute_shared_secret():
+            print("\n  Протокол успешно завершён.")
+            return True
+        print("\n  Обмен не принят. Введите другие секретные ключи A и B.")
+
+
 def main():
     dh = DiffieHellman()
 
@@ -367,14 +423,14 @@ def main():
         if choice == "1":
             try:
                 n = int(input("  Введите простое число n: "))
-                a = int(input("  Введите генератор a (1 < a < n): "))
+                a = int(input("  Введите основание a (1 < a < n): "))
                 dh.set_params(n, a)
             except ValueError:
                 print("  Ошибка: введите целые числа.")
 
         elif choice == "2":
             try:
-                bits = int(input("  Битность n (рекомендуется 64-128 для демо, 512+ для практики) [64]: ").strip() or "64")
+                bits = int(input("  Битность n для учебной автогенерации (4..32) [24]: ").strip() or "24")
                 dh.auto_generate_params(bits)
             except ValueError:
                 print("  Ошибка: введите целое число.")
@@ -406,20 +462,7 @@ def main():
             dh.compute_shared_secret()
 
         elif choice == "7":
-            # Полная авто-демонстрация
-            try:
-                bits = int(input("  Битность n [64]: ").strip() or "64")
-            except ValueError:
-                bits = 64
-            dh.auto_generate_params(bits)
-            try:
-                K_A = int(input(f"  Введите свой секретный ключ K_A (из [2, {dh.n-1}]): "))
-                dh.set_secret_key_A(K_A)
-            except ValueError:
-                dh.K_A = random.randint(2, dh.n - 1)
-                print(f"  Для A случайно выбран K_A = {dh.K_A}")
-            dh.auto_secret_key_B()
-            dh.full_demo()
+            manual_protocol(dh)
 
         elif choice == "8":
             demo_textbook(dh)

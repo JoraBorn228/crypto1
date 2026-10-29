@@ -4,7 +4,7 @@
 Вариант: "Леопард не может изменить своих пятен"
 
 Источник: ЛАБКРИПТ_2022, Блок J, стр. 37-39
-Задание: "Задание по ГОСТ Р 34.10-2012.pdf"
+Задание: "PDF/Задание по ГОСТ Р 34.10-2012..pdf"
 
 Параметры из методички (пример):
   Кривая E_p(a,b): y² ≡ x³ + x + 1 (mod 11)
@@ -35,6 +35,7 @@
   7. r' = x_{C'} mod q; если r' = r — подпись верна
 """
 import random
+from math import isqrt
 
 # ─────────────────────────────────────────────
 #  Эллиптическая кривая
@@ -85,6 +86,26 @@ class EllipticCurve:
             addend = self.add(addend, addend)
             k >>= 1
         return result
+
+
+def point_order(curve, P):
+    """Вычисляет порядок точки P перебором кратных P.
+
+    Для кривой над простым полем порядок группы точек не превосходит
+    p + 1 + 2*sqrt(p) (граница Хассе), поэтому перебор имеет верхнюю границу.
+    """
+    if curve.p <= 1:
+        raise ValueError("Модуль p должен быть больше 1.")
+    if P is None or not curve.is_on_curve(P):
+        raise ValueError("Точка G должна лежать на заданной кривой.")
+
+    max_order = curve.p + 1 + isqrt(4 * curve.p)
+    multiple = None
+    for order in range(1, max_order + 1):
+        multiple = curve.add(multiple, P)
+        if multiple is None:
+            return order
+    raise ValueError("Не удалось вычислить порядок G; проверьте параметры кривой.")
 
 
 # ─────────────────────────────────────────────
@@ -222,12 +243,10 @@ def main():
                 p = int(input("  p (простое): "))
                 a = int(input("  a: "))
                 b = int(input("  b: "))
-                q = int(input("  q (порядок подгруппы, простое): "))
                 gx = int(input("  Gx (x-координата генератора): "))
                 gy = int(input("  Gy (y-координата генератора): "))
                 curve = EllipticCurve(p=p, a=a, b=b)
                 P_BASE = (gx, gy)
-                Q_ORDER = q
                 if not curve.is_on_curve(P_BASE):
                     print("  ОШИБКА: точка G не лежит на заданной кривой!")
                     # Возвращаем умолчания
@@ -235,6 +254,8 @@ def main():
                     P_BASE = DEFAULT_G
                     Q_ORDER = DEFAULT_Q
                 else:
+                    Q_ORDER = point_order(curve, P_BASE)
+                    print(f"  Порядок точки G вычислен автоматически: q = {Q_ORDER}.")
                     print("  Параметры установлены.")
 
             elif choice == "2":
