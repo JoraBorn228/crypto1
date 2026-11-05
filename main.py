@@ -6,221 +6,132 @@ BASE_DIR = Path(__file__).parent
 
 
 def run_script(relative_path):
-    
+    path = BASE_DIR / relative_path
     try:
-        path = BASE_DIR / relative_path
-
         print("\n" + "=" * 60)
         print(f"Запуск: {path.name}")
         print("=" * 60 + "\n")
-
         runpy.run_path(str(path), run_name="__main__")
-
+    except SystemExit:
+        # Возврат в меню, если вложенная лабораторная программа вызвала exit.
+        pass
     except FileNotFoundError:
         print(f"\nФайл не найден:\n{path}")
-
-    except Exception as e:
-        print(f"\nОшибка:\n{e}")
-
+    except Exception as exc:
+        print(f"\nОшибка:\n{exc}")
     input("\nНажмите Enter для продолжения...")
 
 
-# ==========================
-# КЛАССИЧЕСКИЕ ШИФРЫ
-# ==========================
-
 def classic_menu():
+    options = {
+        "1": ("Атбаш", "Лабы Тема 1/Лаб 1_1/1.Шифр Атбаш.py"),
+        "2": ("Белазо", "Лабы Тема 1/Лаб 1_2/5.Шифр Белазо.py"),
+        "3": ("Матричный шифр", "Лабы Тема 1/Лаб 1_3/8.Матричный шифр.py"),
+        "4": ("Вертикальная перестановка", "Лабы Тема 1/Лаб 1_4/10.Вертикальная перестановка.py"),
+    }
     while True:
-
         print("\n" + "=" * 60)
         print("КЛАССИЧЕСКИЕ ШИФРЫ")
         print("=" * 60)
-
-        print("1 - Атбаш")
-        print("2 - Цезарь")
-        print("3 - Полибий")
-        print("4 - Тритемий")
-        print("5 - Виженер")
-        print("6 - Вертикальная перестановка")
-        print("7 - Матричный шифр")
-        print("8 - Плейфер")
+        for number, (name, _) in options.items():
+            print(f"{number} - {name}")
         print("0 - Назад")
-
-        choice = input("\nВаш выбор: ")
-
-        if choice == "1":
-            run_script("Лабы Тема 1/Лаб 1_1/1.Шифр Атбаш.py")
-
-        elif choice == "2":
-            run_script("Лабы Тема 1/Лаб 1_1/2.Шифр Цезаря.py")
-
-        elif choice == "3":
-            run_script("Лабы Тема 1/Лаб 1_1/3.Квадрат Полибия.py")
-
-        elif choice == "4":
-            run_script("Лабы Тема 1/Лаб 1_2/4.Шифр Тритемия.py")
-
-        elif choice == "5":
-            run_script("Лабы Тема 1/Лаб 1_2/5.Шифр Виженера.py")
-
-        elif choice == "6":
-            run_script("Лабы Тема 1/Лаб 1_4/10.Вертикальная перестановка.py")
-
-        elif choice == "7":
-            run_script("Лабы Тема 1/Лаб 1_3/8.Матричный шифр.py")
-
-        elif choice == "8":
-            run_script("Лабы Тема 1/Лаб 1_3/9.Шифр Плейфера.py")
-
-        elif choice == "0":
+        choice = input("\nВаш выбор: ").strip()
+        if choice == "0":
             return
+        if choice in options:
+            run_script(options[choice][1])
+        else:
+            print("Неверный выбор")
 
-
-# ==========================
-# СИММЕТРИЧНЫЕ АЛГОРИТМЫ
-# ==========================
 
 def symmetric_menu():
-
+    options = {
+        "1": ("Одноразовый блокнот Шеннона", "Лабы Тема 1/Лаб 1_5/13.Одноразовый блокнот К.Шеннона.py"),
+        "2": ("A5/1", "Лабы Тема 1/Лаб 1_6/15.A5_1.py"),
+        "3": ("AES", "Лабы Тема 1/Лаб 1_7/19.AES.py"),
+    }
     while True:
-
         print("\n" + "=" * 60)
         print("СИММЕТРИЧНЫЕ АЛГОРИТМЫ")
         print("=" * 60)
-
-        print("1 - МАГМА (ГОСТ Р 34.12-2015)")
-        print("2 - Блокнот Шеннона")
-        print("3 - A5/1")
-        print("4 - A5/2")
-        print("5 - AES")
-        print("6 - Кузнечик (ГОСТ Р 34.12-2015)")
+        for number, (name, _) in options.items():
+            print(f"{number} - {name}")
         print("0 - Назад")
-
-        choice = input("\nВаш выбор: ")
-
-        if choice == "1":
-            run_script("Лабы Тема 1/Лаб 1_7/17.MAGMA.py")
-
-        elif choice == "2":
-            run_script("Лабы Тема 1/Лаб 1_5/13.Одноразовый блокнот К.Шеннона.py")
-
-        elif choice == "3":
-            run_script("Лабы Тема 1/Лаб 1_6/15.A5_1.py")
-
-        elif choice == "4":
-            run_script("Лабы Тема 1/Лаб 1_6/16.A5_2.py")
-
-        elif choice == "5":
-            run_script("Лабы Тема 1/Лаб 1_7/19.AES.py")
-
-        elif choice == "6":
-            run_script("Лабы Тема 1/Лаб 1_7/20.KUZNECHIK.py")
-
-        elif choice == "0":
+        choice = input("\nВаш выбор: ").strip()
+        if choice == "0":
             return
+        if choice in options:
+            run_script(options[choice][1])
+        else:
+            print("Неверный выбор")
 
-
-# ==========================
-# АСИММЕТРИЧНЫЕ
-# ==========================
 
 def asymmetric_menu():
-
+    options = {
+        "1": ("RSA (шифрование)", "Лабы Тема 2/Лаб 2_1/21-23.RSA_Elgamal_ECC.py"),
+        "2": ("Диффи—Хеллман", "Лабы Тема 4/Лаб 4_1/28.Диффи-Хеллман.py"),
+    }
     while True:
-
         print("\n" + "=" * 60)
-        print("АСИММЕТРИЧНЫЕ АЛГОРИТМЫ")
+        print("АСИММЕТРИЧНЫЕ АЛГОРИТМЫ И ОБМЕН КЛЮЧАМИ")
         print("=" * 60)
-
-        print("1 - RSA (шифрование)")
-        print("2 - Диффи-Хеллман")
+        for number, (name, _) in options.items():
+            print(f"{number} - {name}")
         print("0 - Назад")
-
-        choice = input("\nВаш выбор: ")
-
-        if choice == "1":
-            run_script("Лабы Тема 2/Лаб 2_1/21-23.RSA_Elgamal_ECC.py")
-
-        elif choice == "2":
-            run_script("Лабы Тема 4/Лаб 4_1/28.Диффи-Хеллман.py")
-
-        elif choice == "0":
+        choice = input("\nВаш выбор: ").strip()
+        if choice == "0":
             return
+        if choice in options:
+            run_script(options[choice][1])
+        else:
+            print("Неверный выбор")
 
-
-# ==========================
-# ЭЛЕКТРОННАЯ ПОДПИСЬ
-# ==========================
 
 def signature_menu():
-
+    options = {
+        "1": ("Цифровая подпись RSA", "Лабы Тема 3/Лаб 3_1/24.RSA.py"),
+        "2": ("ГОСТ Р 34.10-2012", "Лабы Тема 3/Лаб 3_2/27.ГОСТ_Р_34.10-2012.py"),
+    }
     while True:
-
         print("\n" + "=" * 60)
         print("ЭЛЕКТРОННАЯ ПОДПИСЬ")
         print("=" * 60)
-
-        print("1 - RSA подпись")
-        print("2 - ГОСТ Р 34.10-94")
-        print("3 - ГОСТ Р 34.10-2012")
+        for number, (name, _) in options.items():
+            print(f"{number} - {name}")
         print("0 - Назад")
-
-        choice = input("\nВаш выбор: ")
-
-        if choice == "1":
-            run_script("Лабы Тема 3/Лаб 3_1/24.RSA.py")
-
-        elif choice == "2":
-            run_script("Лабы Тема 3/Лаб 3_2/26.ГОСТ_Р_34.10-94.py")
-
-        elif choice == "3":
-            run_script("Лабы Тема 3/Лаб 3_2/27.ГОСТ_Р_34.10-2012.py")
-
-        elif choice == "0":
+        choice = input("\nВаш выбор: ").strip()
+        if choice == "0":
             return
+        if choice in options:
+            run_script(options[choice][1])
+        else:
+            print("Неверный выбор")
 
-
-# ==========================
-# ГЛАВНОЕ МЕНЮ
-# ==========================
 
 def main():
-
+    menus = {
+        "1": ("Классические шифры", classic_menu),
+        "2": ("Симметричные алгоритмы", symmetric_menu),
+        "3": ("Асимметричные алгоритмы и обмен ключами", asymmetric_menu),
+        "4": ("Электронная подпись", signature_menu),
+    }
     while True:
-
-        print("\n")
-        print("=" * 60)
+        print("\n" + "=" * 60)
         print("ГЛАВНОЕ МЕНЮ КРИПТОГРАФИЧЕСКИХ АЛГОРИТМОВ")
         print("=" * 60)
-
-        print("1 - Классические шифры")
-        print("2 - Симметричные алгоритмы")
-        print("3 - Асимметричные алгоритмы")
-        print("4 - Электронная подпись")
+        for number, (name, _) in menus.items():
+            print(f"{number} - {name}")
         print("0 - Выход")
-
-        choice = input("\nВаш выбор: ")
-
-        if choice == "1":
-            classic_menu()
-
-        elif choice == "2":
-            symmetric_menu()
-
-        elif choice == "3":
-            asymmetric_menu()
-
-        elif choice == "4":
-            signature_menu()
-
-        elif choice == "0":
+        choice = input("\nВаш выбор: ").strip()
+        if choice == "0":
             print("\nДо свидания!")
             break
-
+        if choice in menus:
+            menus[choice][1]()
         else:
             print("\nНеверный выбор")
 
 
 if __name__ == "__main__":
     main()
-

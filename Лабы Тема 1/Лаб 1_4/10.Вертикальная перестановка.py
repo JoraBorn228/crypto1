@@ -110,7 +110,7 @@ def shifrovat(text, word_key):
                 print(f"  {text[index]}  |", end="")
                 index += 1
             else:
-                row.append('.')  # Пустая клетка
+                row.append(None)  # Пустая клетка (None, чтобы не путать с точкой из текста)
                 print(f"  .  |", end="")
         matrix.append(row)
         print(f"  строка {i+1}")
@@ -126,7 +126,7 @@ def shifrovat(text, word_key):
         column_text = ""
         print(f"   {new_pos+1}. Столбец {col+1} (буква '{letter}' №{repeat_num}): ", end="")
         for row in range(rows):
-            if matrix[row][col] != '.':  # Пропускаем пустые клетки
+            if matrix[row][col] is not None:  # Пропускаем пустые клетки
                 result += matrix[row][col]
                 column_text += matrix[row][col]
         print(column_text)
@@ -150,7 +150,7 @@ def rasshifrovat(cipher, word_key, numeric_key, sorted_letters, rows, cols):
     print(f"4. Числовой ключ: {numeric_key}")
     
     # Создаем пустую таблицу
-    matrix = [['.' for _ in range(cols)] for _ in range(rows)]
+    matrix = [[None for _ in range(cols)] for _ in range(rows)]
     
     # Сначала нужно определить, в каких столбцах есть пустые клетки
     # Вычисляем сколько символов в каждом столбце
@@ -191,7 +191,7 @@ def rasshifrovat(cipher, word_key, numeric_key, sorted_letters, rows, cols):
     for i in range(rows):
         print(f"   |", end="")
         for j in range(cols):
-            print(f"  {matrix[i][j]}  |", end="")
+            print(f"  {matrix[i][j] if matrix[i][j] is not None else '.'}  |", end="")
         print(f"  строка {i+1}")
         print("   " + "-" * (cols * 7))
     
@@ -201,7 +201,7 @@ def rasshifrovat(cipher, word_key, numeric_key, sorted_letters, rows, cols):
     for i in range(rows):
         row_text = ""
         for j in range(cols):
-            if matrix[i][j] != '.':
+            if matrix[i][j] is not None:
                 result += matrix[i][j]
                 row_text += matrix[i][j]
         print(f"   Строка {i+1}: {row_text}")

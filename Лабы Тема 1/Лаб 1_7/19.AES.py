@@ -109,19 +109,22 @@ class AES:
             state[3][j] = xtime(a) ^ a ^ b ^ c ^ xtime(d)
 
     def inv_mix_columns(self, state):
-        for j in range(4):
-            a = state[0][j]
-            b = state[1][j]
-            c = state[2][j]
-            d = state[3][j]
-            state[0][j] = (xtime(xtime(xtime(a) ^ xtime(c)) ^ xtime(xtime(b) ^ xtime(d))) ^
-                           xtime(xtime(a ^ c) ^ xtime(b ^ d)) ^ a ^ b ^ c ^ d) & 0xff
-            state[1][j] = (xtime(xtime(xtime(b) ^ xtime(d)) ^ xtime(xtime(a) ^ xtime(c))) ^
-                           xtime(xtime(b ^ d) ^ xtime(a ^ c)) ^ a ^ b ^ c ^ d) & 0xff
-            state[2][j] = (xtime(xtime(xtime(c) ^ xtime(a)) ^ xtime(xtime(d) ^ xtime(b))) ^
-                           xtime(xtime(c ^ a) ^ xtime(d ^ b)) ^ a ^ b ^ c ^ d) & 0xff
-            state[3][j] = (xtime(xtime(xtime(d) ^ xtime(b)) ^ xtime(xtime(c) ^ xtime(a))) ^
-                           xtime(xtime(d ^ b) ^ xtime(c ^ a)) ^ a ^ b ^ c ^ d) & 0xff
+        """Обратное преобразование столбцов AES по матрице 14/11/13/9."""
+        def gf_mul(value, factor):
+            result = 0
+            while factor:
+                if factor & 1:
+                    result ^= value
+                value = xtime(value)
+                factor >>= 1
+            return result
+
+        for col in range(4):
+            a, b, c, d = (state[row][col] for row in range(4))
+            state[0][col] = gf_mul(a, 14) ^ gf_mul(b, 11) ^ gf_mul(c, 13) ^ gf_mul(d, 9)
+            state[1][col] = gf_mul(a, 9) ^ gf_mul(b, 14) ^ gf_mul(c, 11) ^ gf_mul(d, 13)
+            state[2][col] = gf_mul(a, 13) ^ gf_mul(b, 9) ^ gf_mul(c, 14) ^ gf_mul(d, 11)
+            state[3][col] = gf_mul(a, 11) ^ gf_mul(b, 13) ^ gf_mul(c, 9) ^ gf_mul(d, 14)
 
     def encrypt_block(self, plain):
         state = [[0]*4 for _ in range(4)]

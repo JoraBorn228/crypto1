@@ -1,5 +1,4 @@
 import random
-import os
 
 def is_prime(n: int, k: int = 10) -> bool:
     if n < 2:
@@ -139,13 +138,9 @@ class RSASignature:
         print(f"Сравниваем с хэшем: {h} == {decrypted} => {h == decrypted}")
         return h == decrypted
 
-def clear_screen():
-    os.system('cls' if os.name == 'nt' else 'clear')
-
 def main():
     rsa = RSASignature()
     while True:
-        clear_screen()
         print("\nЦИФРОВАЯ ПОДПИСЬ RSA")
         print("1. Ввести ключи (p, q, e)")
         print("2. Подписать сообщение")
@@ -192,6 +187,8 @@ def main():
             break
         else:
             print("Неверный выбор")
+
+        input("\nНажмите Enter, чтобы вернуться в меню...")
 
 if __name__ == "__main__":
     main()

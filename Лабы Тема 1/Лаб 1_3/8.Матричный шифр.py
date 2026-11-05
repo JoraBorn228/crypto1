@@ -86,55 +86,67 @@ class MatrixCipher:
         for num in numbers:
             text += RUSSIAN_ALPHABET[num % self.mod]
         return text
-    
+
+    @staticmethod
+    def _is_encrypted_character(char):
+        """Проверяет, преобразуется ли символ текущим алфавитным правилом."""
+        return char.upper() in RUSSIAN_ALPHABET or char.upper() == 'Ё' or char.isalpha()
+
+    def _restore_format(self, template, transformed):
+        """Возвращает преобразованные буквы на исходные места, сохраняя разделители."""
+        result = []
+        letter_index = 0
+        for char in template:
+            if self._is_encrypted_character(char):
+                if letter_index < len(transformed):
+                    result.append(transformed[letter_index])
+                    letter_index += 1
+            else:
+                result.append(char)
+        # Остаток — это символы дополнения блока.
+        result.extend(transformed[letter_index:])
+        return ''.join(result)
+
     def encrypt(self, text):
-        """Шифрование текста"""
-        # Преобразуем текст в числа
+        """Шифрует буквы, оставляя пробелы и знаки на прежних местах."""
         numbers = self._text_to_numbers(text)
-        
         if not numbers:
-            return ""
-        
-        # Дополняем до длины, кратной размеру матрицы
+            return text
+
+        # Дополняем буквенную последовательность до длины, кратной размеру матрицы.
         while len(numbers) % self.size != 0:
             numbers.append(RUSSIAN_ALPHABET.index('Ъ'))
-        
-        # Шифруем по блокам
+
         encrypted = []
         for i in range(0, len(numbers), self.size):
             block = numbers[i:i + self.size]
             encrypted_block = np.dot(self.matrix, block) % self.mod
             encrypted.extend(encrypted_block)
-        
-        return self._numbers_to_text(encrypted)
-    
+
+        encrypted_letters = self._numbers_to_text(encrypted)
+        return self._restore_format(text, encrypted_letters)
+
     def decrypt(self, text, remove_padding=True):
-        """Расшифрование текста"""
-        # Преобразуем текст в числа
+        """Расшифровывает буквы, сохраняя пробелы и знаки на прежних местах."""
         numbers = self._text_to_numbers(text)
-        
         if not numbers:
-            return ""
-        
-        # Проверяем длину
+            return text
+
+        # Длина буквенной последовательности должна делиться на размер матрицы.
         if len(numbers) % self.size != 0:
             while len(numbers) % self.size != 0:
                 numbers.append(RUSSIAN_ALPHABET.index('Ъ'))
-        
-        # Расшифровываем по блокам
+
         decrypted = []
         for i in range(0, len(numbers), self.size):
             block = numbers[i:i + self.size]
             decrypted_block = np.dot(self.inverse_matrix, block) % self.mod
             decrypted.extend(decrypted_block)
-        
-        result = self._numbers_to_text(decrypted)
-        
-        # Убираем дополнение
+
+        decrypted_letters = self._numbers_to_text(decrypted)
         if remove_padding:
-            result = result.rstrip('Ъ')
-        
-        return result
+            decrypted_letters = decrypted_letters.rstrip('Ъ')
+        return self._restore_format(text, decrypted_letters)
 
 
 def validate_matrix(matrix):
@@ -179,7 +191,7 @@ def main():
 
         if choice == "1":
 
-            text = input("Введите текст для шифрования: ").strip()
+            text = input("Введите текст для шифрования: ")
 
             print("\nВведите матрицу-ключ")
             print("Пример: 3 2 1, 1 1 1, 1 2 3")
@@ -214,7 +226,7 @@ def main():
 
         elif choice == "2":
 
-            text = input("Введите текст для расшифрования: ").strip()
+            text = input("Введите текст для расшифрования: ")
 
             print("\nВведите ту же матрицу-ключ")
 

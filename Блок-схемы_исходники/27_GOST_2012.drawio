@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" modified="2026-11-04T23:10:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="27_GOST_2012" name="ГОСТ Р 34.10-2012">
+    <mxGraphModel dx="1240" dy="1040" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="1040" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="1000" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="start" target="params">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1001" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="params" target="curve">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1002" value="Да" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="curve" target="order">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1003" value="Нет" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="curve" target="fallback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1004" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="fallback" target="mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1005" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="order" target="mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1006" value="Создание" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="mode" target="signin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1007" value="Проверка" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="mode" target="verin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1008" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="signin" target="keyvalid">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1009" value="Да" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="keyvalid" target="hashsign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1010" value="Нет" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="keyvalid" target="error">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1011" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="hashsign" target="sigvalid">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1012" value="Да" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="sigvalid" target="sigout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1013" value="Нет" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="sigvalid" target="error">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1014" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="verin" target="vervalid">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1015" value="Да" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="vervalid" target="verify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1016" value="Нет" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="vervalid" target="error">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1017" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="verify" target="compare">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1018" value="Да" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="compare" target="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1019" value="Нет" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#444444;fontFamily=Arial;fontSize=14;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=1;exitPerimeter=1;" edge="1" parent="1" source="compare" target="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="start" value="Начало" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#174a75;fontFamily=Arial;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="520" y="15" width="200" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="params" value="Параметры кривой p, a, b, G&lt;br&gt;начальные или заданные пользователем" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="390" y="80" width="460" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="curve" value="G принадлежит кривой?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#c99a00;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="490" y="165" width="260" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="fallback" value="При ошибке восстановить параметры примера&lt;br&gt;p=11, a=b=1, G=(0,1), q=7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="35" y="180" width="300" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="order" value="Для заданной кривой вычислить порядок q точки G" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="390" y="295" width="460" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="mode" value="Операция: создание или проверка подписи?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#c99a00;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="490" y="385" width="260" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="signin" value="Создание: ввести M, закрытый xA&lt;br&gt;и одноразовый k" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="35" y="510" width="330" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="keyvalid" value="0 &amp;lt; xA &amp;lt; q и 0 &amp;lt; k &amp;lt; q?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#c99a00;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="75" y="595" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="hashsign" value="Вычислить e=h(M); при e=0 принять e=1;&lt;br&gt;вычислить YA=xA·G, C=k·G, r и s" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="35" y="720" width="330" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="sigvalid" value="r ≠ 0 и s ≠ 0?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#c99a00;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="75" y="825" width="250" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="sigout" value="Вывести (r,s) и YA;&lt;br&gt;проверить созданную подпись" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="35" y="935" width="330" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="verin" value="Проверка: ввести M, r, s&lt;br&gt;и координаты открытого ключа YA" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="855" y="510" width="350" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="vervalid" value="YA на кривой; 0 &amp;lt; r,s &amp;lt; q?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#c99a00;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="905" y="595" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="verify" value="Вычислить e, v=e⁻¹ mod q, z1, z2, C′;&lt;br&gt;получить r′=xC′ mod q" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="855" y="720" width="350" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="compare" value="r′ = r?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#c99a00;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="905" y="825" width="250" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="yes" value="Сообщить: подпись верна" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="770" y="935" width="210" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="no" value="Сообщить: подпись неверна" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1005" y="935" width="215" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="error" value="Ошибка входных данных;&lt;br&gt;вернуться в меню" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#eaf2f8;strokeColor=#174a75;fontFamily=Arial;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="430" y="635" width="250" height="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
