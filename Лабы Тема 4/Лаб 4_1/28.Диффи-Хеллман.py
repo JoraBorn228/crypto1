@@ -226,6 +226,33 @@ class DiffieHellman:
         print(f"  Секретный ключ B: K_B = {K_B}")
         return True
 
+    # ── Проверка: открытый ключ не должен совпадать с секретным ──
+
+    def check_public_keys_do_not_reveal_secrets(self):
+        """
+        Проверяет, что открытые ключи не совпали с секретными.
+        Если Y_A == K_A, Y_B == K_B или открытый ключ одной стороны
+        равен секретному ключу другой — секрет раскрыт, ключи надо сменить.
+        """
+        if self.Y_A is None or self.Y_B is None:
+            return True
+
+        checks = (
+            ("Y_A", self.Y_A, "K_A", self.K_A),
+            ("Y_B", self.Y_B, "K_B", self.K_B),
+            ("Y_A", self.Y_A, "K_B", self.K_B),
+            ("Y_B", self.Y_B, "K_A", self.K_A),
+        )
+
+        for pub_name, pub_val, sec_name, sec_val in checks:
+            if sec_val is not None and pub_val == sec_val:
+                print(f"\n  ✗ ОШИБКА: {pub_name} == {sec_name} = {pub_val}.")
+                print("    Открытый ключ совпал с секретным — секрет раскрыт.")
+                print("    Выберите другие секретные ключи A и B.")
+                return False
+
+        return True
+
     # ── Шаг 2: Вычисление открытых ключей ───────────────────
 
     def compute_public_keys(self):
@@ -233,6 +260,7 @@ class DiffieHellman:
         Шаг 2 алгоритма:
           Y_A = a^K_A mod n
           Y_B = a^K_B mod n
+        После вычисления проверяет, что открытые ключи не совпали с секретными.
         """
         if None in (self.n, self.a, self.K_A, self.K_B):
             print("  Ошибка: не все параметры установлены!")
@@ -242,6 +270,12 @@ class DiffieHellman:
         print(f"\n  Открытые ключи (передаются по открытому каналу):")
         print(f"    Y_A = a^K_A mod n = {self.a}^{self.K_A} mod {self.n} = {self.Y_A}")
         print(f"    Y_B = a^K_B mod n = {self.a}^{self.K_B} mod {self.n} = {self.Y_B}")
+
+        if not self.check_public_keys_do_not_reveal_secrets():
+            self.Y_A = self.Y_B = None
+            self.shared_K_A = self.shared_K_B = None
+            return False
+
         return True
 
     # ── Шаг 3: Вычисление общего секрета ────────────────────
@@ -251,7 +285,10 @@ class DiffieHellman:
         Шаг 3 алгоритма:
           K_A: K = Y_B^K_A mod n
           K_B: K = Y_A^K_B mod n
-          Проверка: вычисленные сторонами значения K совпадают и не равны 1
+        Проверки:
+          - K у A и B совпадают;
+          - K не равен ни одному открытому ключу Y_A, Y_B
+            (иначе секрет виден из открытого канала).
         """
         if None in (self.Y_A, self.Y_B, self.K_A, self.K_B):
             print("  Ошибка: сначала вычислите открытые ключи!")
@@ -264,17 +301,22 @@ class DiffieHellman:
         print(f"    A: K = Y_B^K_A mod n = {self.Y_B}^{self.K_A} mod {self.n} = {self.shared_K_A}")
         print(f"    B: K = Y_A^K_B mod n = {self.Y_A}^{self.K_B} mod {self.n} = {self.shared_K_B}")
 
-        if self.shared_K_A == self.shared_K_B == 1:
-            print("\n  ✗ ОШИБКА: общий секрет равен 1 и считается недопустимым.")
+        if self.shared_K_A != self.shared_K_B:
+            print(f"\n  ✗ ОШИБКА: K у A ≠ K у B  ({self.shared_K_A} ≠ {self.shared_K_B})")
+            return False
+
+        # Главная проверка: общий секрет не должен совпасть с открытым ключом
+        if self.shared_K_A == self.Y_A or self.shared_K_A == self.Y_B:
+            which = "Y_A" if self.shared_K_A == self.Y_A else "Y_B"
+            print(f"\n  ✗ ОШИБКА: общий секрет K = {self.shared_K_A} совпал с открытым ключом {which}.")
+            print("    Такой секрет виден из открытого канала.")
             print("    Выберите другие секретные ключи A и B.")
             self.shared_K_A = self.shared_K_B = None
             return False
-        if self.shared_K_A == self.shared_K_B:
-            print(f"\n  ✓ ПРОВЕРКА ПРОЙДЕНА: K у A = K у B = {self.shared_K_A}")
-            print(f"    Общий секретный ключ успешно выработан!")
-        else:
-            print(f"\n  ✗ ОШИБКА: K у A ≠ K у B  ({self.shared_K_A} ≠ {self.shared_K_B})")
-        return self.shared_K_A == self.shared_K_B
+
+        print(f"\n  ✓ ПРОВЕРКА ПРОЙДЕНА: K у A = K у B = {self.shared_K_A}")
+        print(f"    Общий секретный ключ успешно выработан!")
+        return True
 
     # ── Полная демонстрация протокола ────────────────────────
 
@@ -295,7 +337,11 @@ class DiffieHellman:
         print(f"    Пользователь B выбирает K_B = {self.K_B}  (из интервала [2, n-1])")
 
         print("\n  Шаг 3. Вычисление открытых ключей:")
-        self.compute_public_keys()
+        if not self.compute_public_keys():
+            print(f"\n{sep}")
+            print("  ИТОГ: Ошибка в протоколе!")
+            print(sep)
+            return False
 
         print("\n  Шаг 4. Обмен открытыми ключами по открытому каналу:")
         print(f"    A → B: Y_A = {self.Y_A}")
@@ -368,7 +414,9 @@ def demo_textbook(dh):
     dh.shared_K_B = None
 
     print("\n  Открытые ключи:")
-    dh.compute_public_keys()
+    if not dh.compute_public_keys():
+        print("  Демонстрация прервана: открытый ключ раскрывает секрет.")
+        return
     print("\n  Общий секрет:")
     dh.compute_shared_secret()
 
@@ -404,7 +452,8 @@ def manual_protocol(dh):
 
         print("\n3. Вычислите открытые ключи")
         if not dh.compute_public_keys():
-            return False
+            print("  Повторите ввод секретных ключей A и B.")
+            continue
 
         print("\n4. Вычислите общий секрет и проверьте протокол")
         if dh.compute_shared_secret():

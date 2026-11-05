@@ -192,14 +192,14 @@ def decrypt():
     plain_bits = [cipher_bits[i] ^ keystream[i] for i in range(len(cipher_bits))]
     plaintext = bits_to_text(plain_bits)
 
-    print("\nРЕЗУЛЬТАТ")
+    print("")
     print(f"Ключ (hex): {bits_to_hex(key_bits)}")
     print(f"Номер кадра: {frame_num}")
     print(f"Расшифрованный текст: {plaintext}")
 
 def main():
     while True:
-        print("\nПОТОЧНЫЙ ШИФР A5/1")
+        print("\ ШИФР A5/1")
         print("1. Зашифровать текст")
         print("2. Расшифровать текст")
         print("3. Выход")
